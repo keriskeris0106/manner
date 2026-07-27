@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 8단계 로그인 & 유효 학급 코드 인증 (auth.js)
+   🎮 [존댓말 차원 탐험대] 교사/학생 인증 및 학급 코드 검증 (auth.js)
    ========================================================================== */
 
 import { 
@@ -26,21 +26,26 @@ export function initAuthSystem(callbacks) {
     const formTeacherRegister = document.getElementById('form-teacher-register');
     const btnLogout = document.getElementById('btn-logout');
 
-    tabStudent.addEventListener('click', () => {
+    // 1번: 탭 전환 화면 보장
+    tabStudent.addEventListener('click', (e) => {
+        e.preventDefault();
         tabStudent.classList.add('active');
         tabTeacher.classList.remove('active');
         formStudent.classList.remove('hidden');
         boxTeacher.classList.add('hidden');
     });
 
-    tabTeacher.addEventListener('click', () => {
+    tabTeacher.addEventListener('click', (e) => {
+        e.preventDefault();
         tabTeacher.classList.add('active');
         tabStudent.classList.remove('active');
         formStudent.classList.add('hidden');
         boxTeacher.classList.remove('hidden');
+        btnGoogleLogin.classList.remove('hidden');
+        formTeacherRegister.classList.add('hidden');
     });
 
-    // 학생 로그인 (교사가 생성한 유효 학급 코드만 입장 가능)
+    // 2번: 학생 로그인 시 학급 코드 검증 및 경고문구 표출
     formStudent.addEventListener('submit', async (e) => {
         e.preventDefault();
         const classCode = document.getElementById('student-class-code').value.trim().toUpperCase();
@@ -55,7 +60,8 @@ export function initAuthSystem(callbacks) {
 
         const isValid = await validateClassCode(classCode);
         if (!isValid && classCode !== 'EXP123' && classCode !== 'DEMO123') {
-            alert(`❌ 유효한 학급 초대 코드가 아닙니다.\n선생님이 구글 로그인 후 발급한 정확한 클래스 코드를 입력해 주세요!`);
+            // 요구사항 2번 경고 문구 반영!
+            alert(`⚠️ 선생님께 다시 여쭤보세요!\n입력하신 학급 초대 코드 (${classCode})가 존재하지 않거나 잘못되었습니다.`);
             return;
         }
 
@@ -70,12 +76,12 @@ export function initAuthSystem(callbacks) {
         onUserLoginSuccess(studentData);
     });
 
-    // 교사 구글 로그인 (요구사항 2: 승인 절차 전면 제거, 누구나 구글 로그인 시 즉시 교사 권한 획득)
-    btnGoogleLogin.addEventListener('click', async () => {
+    // 교사 로그인
+    btnGoogleLogin.addEventListener('click', async (e) => {
+        e.preventDefault();
         let email = "";
         let displayName = "";
 
-        // 1. Firebase Google Auth Popup 팝업 최우선 실행
         if (isFirebaseAvailable && auth) {
             try {
                 const res = await signInWithPopup(auth, googleProvider);
@@ -93,7 +99,7 @@ export function initAuthSystem(callbacks) {
 
         if (!email) return;
 
-        // 로그인 성공 ➔ 즉시 학급 정보 입력 및 생성 (승인 대기 없음!)
+        // 구글 인증 후 학급 정보 등록 폼 노출
         formTeacherRegister.classList.remove('hidden');
         btnGoogleLogin.classList.add('hidden');
 
@@ -103,7 +109,7 @@ export function initAuthSystem(callbacks) {
             const classNum = document.getElementById('teacher-class-num').value;
             const className = document.getElementById('teacher-class-name').value.trim() || '3학년 긍정열정반';
 
-            // 유효 학급 코드 생성
+            // 고유 학급 초대 코드 자동 생성
             const classCode = `EXP${grade}${classNum}${Math.floor(100 + Math.random() * 900)}`;
 
             const teacherData = {
@@ -115,13 +121,13 @@ export function initAuthSystem(callbacks) {
                 className,
                 classCode,
                 role: 'teacher',
-                status: 'APPROVED', // 승인 절차 없음 (즉시 승인!)
+                status: 'APPROVED',
                 createdAt: new Date().toISOString()
             };
 
             await registerTeacherPending(teacherData);
             saveUserSession(teacherData);
-            alert(`✨ 학급 등록 완료!\n학생 접속용 학급 초대 코드: ${classCode}\n교사 대시보드로 진입합니다.`);
+            alert(`✨ 학급 생성 완료!\n학생 접속용 학급 초대 코드: ${classCode}\n선생님의 교사 대시보드로 입장합니다.`);
             onUserLoginSuccess(teacherData);
         };
     });
