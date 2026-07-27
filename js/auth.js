@@ -6,7 +6,6 @@ import {
     getCurrentUserSession, 
     saveUserSession, 
     clearUserSession, 
-    checkIsSuperAdmin, 
     registerTeacherPending, 
     loginOrRegisterStudent,
     validateClassCode,
@@ -25,7 +24,6 @@ export function initAuthSystem(callbacks) {
     const boxTeacher = document.getElementById('box-teacher-login');
     const btnGoogleLogin = document.getElementById('btn-google-login');
     const formTeacherRegister = document.getElementById('form-teacher-register');
-    const pendingNotice = document.getElementById('teacher-pending-notice');
     const btnLogout = document.getElementById('btn-logout');
 
     tabStudent.addEventListener('click', () => {
@@ -42,7 +40,7 @@ export function initAuthSystem(callbacks) {
         boxTeacher.classList.remove('hidden');
     });
 
-    // 1번: 승인된 클래스 코드만 학생 로그인 허용!
+    // 학생 로그인 (교사가 생성한 유효 학급 코드만 입장 가능)
     formStudent.addEventListener('submit', async (e) => {
         e.preventDefault();
         const classCode = document.getElementById('student-class-code').value.trim().toUpperCase();
@@ -55,10 +53,9 @@ export function initAuthSystem(callbacks) {
             return;
         }
 
-        // 학급 초대 코드 검증
         const isValid = await validateClassCode(classCode);
-        if (!isValid && classCode !== 'DEMO123' && classCode !== 'EXP123') {
-            alert(`❌ 유효하지 않거나 아직 관리자 승인 대기 중인 학급 초대 코드입니다.\n선생님이 발급한 정확한 클래스 코드를 확인해 주세요!`);
+        if (!isValid && classCode !== 'EXP123' && classCode !== 'DEMO123') {
+            alert(`❌ 유효한 학급 초대 코드가 아닙니다.\n선생님이 구글 로그인 후 발급한 정확한 클래스 코드를 입력해 주세요!`);
             return;
         }
 
@@ -73,77 +70,64 @@ export function initAuthSystem(callbacks) {
         onUserLoginSuccess(studentData);
     });
 
-    // 2번: Firebase Google Auth / 팝업 로그인 지원
+    // 교사 구글 로그인 (요구사항 2: 승인 절차 전면 제거, 누구나 구글 로그인 시 즉시 교사 권한 획득)
     btnGoogleLogin.addEventListener('click', async () => {
         let email = "";
         let displayName = "";
 
+        // 1. Firebase Google Auth Popup 팝업 최우선 실행
         if (isFirebaseAvailable && auth) {
             try {
                 const res = await signInWithPopup(auth, googleProvider);
                 email = res.user.email;
                 displayName = res.user.displayName || email.split('@')[0];
             } catch (err) {
-                console.warn("Firebase Popup Auth Fallback:", err);
+                console.warn("Firebase Auth Popup fallback:", err);
                 email = prompt("교사 Google 계정 이메일을 입력해 주세요:");
+                displayName = email ? email.split('@')[0] : "선생님";
             }
         } else {
             email = prompt("교사 Google 계정 이메일을 입력해 주세요:");
+            displayName = email ? email.split('@')[0] : "선생님";
         }
 
         if (!email) return;
 
-        const isSuper = checkIsSuperAdmin(email);
+        // 로그인 성공 ➔ 즉시 학급 정보 입력 및 생성 (승인 대기 없음!)
+        formTeacherRegister.classList.remove('hidden');
+        btnGoogleLogin.classList.add('hidden');
 
-        if (isSuper) {
-            const superUser = {
-                uid: 'super_admin_0106',
+        formTeacherRegister.onsubmit = async (evt) => {
+            evt.preventDefault();
+            const grade = document.getElementById('teacher-grade').value;
+            const classNum = document.getElementById('teacher-class-num').value;
+            const className = document.getElementById('teacher-class-name').value.trim() || '3학년 긍정열정반';
+
+            // 유효 학급 코드 생성
+            const classCode = `EXP${grade}${classNum}${Math.floor(100 + Math.random() * 900)}`;
+
+            const teacherData = {
+                uid: 'teacher_' + Date.now(),
                 email: email,
-                name: displayName || '최종 관리자 (개발자)',
-                role: 'super_admin',
-                isSuperAdmin: true,
-                status: 'APPROVED'
+                name: `${displayName} 선생님`,
+                grade,
+                classNum,
+                className,
+                classCode,
+                role: 'teacher',
+                status: 'APPROVED', // 승인 절차 없음 (즉시 승인!)
+                createdAt: new Date().toISOString()
             };
-            saveUserSession(superUser);
-            alert("👑 최종 관리자 (Super Admin) 권한으로 접속하셨습니다.");
-            onUserLoginSuccess(superUser);
-        } else {
-            formTeacherRegister.classList.remove('hidden');
-            btnGoogleLogin.classList.add('hidden');
 
-            formTeacherRegister.onsubmit = async (evt) => {
-                evt.preventDefault();
-                const school = document.getElementById('teacher-school').value.trim();
-                const grade = document.getElementById('teacher-grade').value;
-                const classNum = document.getElementById('teacher-class-num').value;
-                const className = document.getElementById('teacher-class-name').value.trim();
-
-                const classCode = `EXP${grade}${classNum}${Math.floor(100 + Math.random() * 900)}`;
-
-                const teacherData = {
-                    uid: 'teacher_' + Date.now(),
-                    email: email,
-                    name: `${school} ${grade}-${classNum} 교사 (${displayName || school})`,
-                    school,
-                    grade,
-                    classNum,
-                    className,
-                    classCode,
-                    role: 'teacher',
-                    status: 'PENDING',
-                    createdAt: new Date().toISOString()
-                };
-
-                await registerTeacherPending(teacherData);
-                formTeacherRegister.classList.add('hidden');
-                pendingNotice.classList.remove('hidden');
-                alert(`📩 교사가입 신청 및 학급 코드 생성 완료!\n생성된 학급 코드: ${classCode}\n최종 관리자 승인 후 학생들이 로그인할 수 있습니다.`);
-            };
-        }
+            await registerTeacherPending(teacherData);
+            saveUserSession(teacherData);
+            alert(`✨ 학급 등록 완료!\n학생 접속용 학급 초대 코드: ${classCode}\n교사 대시보드로 진입합니다.`);
+            onUserLoginSuccess(teacherData);
+        };
     });
 
     btnLogout.addEventListener('click', () => {
-        if (confirm("🎮 게을 종료하고 접속 화면으로 돌아가시겠습니까?")) {
+        if (confirm("🎮 게임을 종료하고 접속 화면으로 돌아가시겠습니까?")) {
             clearUserSession();
             onLogout();
         }

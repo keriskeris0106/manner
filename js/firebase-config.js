@@ -65,16 +65,10 @@ export function clearUserSession() {
     localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
 }
 
-export function checkIsSuperAdmin(email) {
-    const adminEmail = getEnv("SUPER_ADMIN_EMAIL");
-    if (adminEmail && email === adminEmail) return true;
-    return email === "keriskeris0106@gmail.com";
-}
-
-// 1번: 교사가 생성하여 승인된 유효 학급 코드 검증 함수
+// 교사가 생성한 학급 초대 코드 검증 (모든 생성 코드는 즉시 유효!)
 export async function validateClassCode(code) {
     const teachers = await getAllTeachers();
-    const valid = teachers.find(t => t.classCode === code && t.status === 'APPROVED');
+    const valid = teachers.find(t => t.classCode === code);
     return !!valid;
 }
 
@@ -101,20 +95,6 @@ export async function getAllTeachers() {
         } catch (e) { console.warn(e); }
     }
     return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
-}
-
-export async function updateTeacherStatus(uid, status) {
-    if (isFirebaseAvailable) {
-        try {
-            await updateDoc(doc(db, "teachers", uid), { status: status });
-        } catch (e) { console.warn(e); }
-    }
-    const teachers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
-    const teacher = teachers.find(t => t.uid === uid);
-    if (teacher) {
-        teacher.status = status;
-        localStorage.setItem(LOCAL_STORAGE_KEY_TEACHERS, JSON.stringify(teachers));
-    }
 }
 
 export async function loginOrRegisterStudent(studentInfo) {
@@ -204,7 +184,6 @@ export function getLeaderboardRankings() {
     return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_RANKING) || "[]");
 }
 
-// 5번: 제작자 프롬프트 저장 및 불러오기
 export function saveCreatorPrompt(worldId, promptText) {
     const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_CREATOR_PROMPT) || "{}");
     data[worldId] = promptText;
