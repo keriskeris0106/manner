@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 철통 인증 & 100% 경고 팝업 보장 (auth.js)
+   🎮 [존댓말 차원 탐험대] 파이어베이스 구글 인증 연동 (Zero Prompt) (auth.js)
    ========================================================================== */
 
 import { 
@@ -17,7 +17,6 @@ import {
 
 let onLoginSuccessCallback = null;
 
-// 1. 탭 선택 전역 핸들러
 window.selectLoginRole = function(role) {
     const tabStudent = document.getElementById('tab-student-login');
     const tabTeacher = document.getElementById('tab-teacher-login');
@@ -61,7 +60,6 @@ window.selectLoginRole = function(role) {
     }
 };
 
-// 2. 학생 로그인 (100% 새로고침 방지 & 경고 팝업 확실 표출)
 window.handleStudentLoginSubmit = async function(e) {
     if (e) {
         e.preventDefault();
@@ -82,7 +80,6 @@ window.handleStudentLoginSubmit = async function(e) {
         return false;
     }
 
-    // 코드 검증 (실패 시에도 무조건 alert() 표출 및 리셋 방지)
     let isValid = false;
     try {
         isValid = await validateClassCode(classCode);
@@ -108,7 +105,7 @@ window.handleStudentLoginSubmit = async function(e) {
     return false;
 };
 
-// 3. 교사 Google 로그인 클릭 (100% 팝업 또는 이메일 대화창 구동)
+// 교사 Google 로그인: 파이어베이스 signInWithPopup 직통 연동 (prompt 문구 100% 없음)
 window.handleGoogleLoginClick = async function(e) {
     if (e) {
         e.preventDefault();
@@ -118,25 +115,25 @@ window.handleGoogleLoginClick = async function(e) {
     let email = "";
     let displayName = "";
 
-    // 1. Firebase Google Auth Popup 팝업 최우선 실행
-    if (isFirebaseAvailable && auth) {
+    // 100% 파이어베이스 Google Auth 팝업 실행
+    if (isFirebaseAvailable && auth && googleProvider) {
         try {
             const res = await signInWithPopup(auth, googleProvider);
             email = res.user.email;
             displayName = res.user.displayName || email.split('@')[0];
         } catch (err) {
-            console.warn("Firebase Auth Popup fallback to Prompt:", err);
-            email = prompt("교사 Google 계정 이메일을 입력해 주세요:");
-            displayName = email ? email.split('@')[0] : "선생님";
+            console.error("Firebase Google Auth Error:", err);
+            alert(`⚠️ 파이어베이스 구글 로그인 인증 오류:\n${err.message || '팝업 창이 차단되었거나 Firebase 설정이 확인되지 않았습니다.'}`);
+            return false;
         }
     } else {
-        email = prompt("교사 Google 계정 이메일을 입력해 주세요:");
-        displayName = email ? email.split('@')[0] : "선생님";
+        alert("⚠️ Vercel의 Firebase 환경 변수(FIREBASE_API_KEY 등)가 아직 세팅되지 않았거나 연동 준비 중입니다.\nVercel 환경변수를 다시 확인해 주세요.");
+        return false;
     }
 
     if (!email) return false;
 
-    // 학급 정보 입력 폼으로 즉시 전환
+    // 구글 로그인 성공 시 학급 정보 입력으로 전환
     const btnGoogle = document.getElementById('btn-google-login');
     const formTeacherRegister = document.getElementById('form-teacher-register');
 
@@ -146,7 +143,6 @@ window.handleGoogleLoginClick = async function(e) {
         formTeacherRegister.style.display = 'block';
     }
 
-    // 전역 교사 학급 생성 제출 핸들러
     window.handleTeacherRegisterSubmit = async function(evt) {
         if (evt) {
             evt.preventDefault();
@@ -175,7 +171,7 @@ window.handleGoogleLoginClick = async function(e) {
 
         await registerTeacherPending(teacherData);
         saveUserSession(teacherData);
-        alert(`✨ 학급 생성 완료!\n선생님의 학급 초대 코드: [ ${classCode} ]\n학생들에게 이 코드를 알려주세요. 교사 대시보드로 진입합니다.`);
+        alert(`✨ 파이어베이스 구글 로그인 성공!\n선생님의 학급 초대 코드: [ ${classCode} ]\n학생들에게 이 코드를 알려주세요. 교사 대시보드로 진입합니다.`);
         if (onLoginSuccessCallback) onLoginSuccessCallback(teacherData);
         return false;
     };

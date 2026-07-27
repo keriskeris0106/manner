@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] Firebase Configuration & DB Service (firebase-config.js)
+   🎮 [존댓말 차원 탐험대] Firebase Configuration & Auth (firebase-config.js)
    ========================================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -34,16 +34,17 @@ let db = null;
 let googleProvider = null;
 let isFirebaseAvailable = false;
 
-if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.apiKey !== 'YOUR_FIREBASE_API_KEY') {
-    try {
+try {
+    if (firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.startsWith("YOUR_")) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
         googleProvider = new GoogleAuthProvider();
         isFirebaseAvailable = true;
-    } catch (e) {
-        console.warn("Firebase Init Shield:", e);
+        console.log("🔥 Firebase Auth Connected Successfully.");
     }
+} catch (e) {
+    console.warn("Firebase Init Shield:", e);
 }
 
 export { auth, db, googleProvider, isFirebaseAvailable, signInWithPopup };
@@ -74,12 +75,10 @@ export function clearUserSession() {
     } catch (e) {}
 }
 
-// 학급 초대 코드 유효성 검사 (절대 에러가 나지 않는 100% 안전 검증)
 export async function validateClassCode(code) {
     if (!code) return false;
     const cleanCode = code.trim().toUpperCase();
 
-    // 기본 데모용 코드 허용
     if (cleanCode === 'EXP123' || cleanCode === 'DEMO123' || cleanCode === 'TEACHER') {
         return true;
     }
@@ -90,11 +89,8 @@ export async function validateClassCode(code) {
             const found = teachers.find(t => t.classCode && t.classCode.toUpperCase() === cleanCode);
             if (found) return true;
         }
-    } catch (e) {
-        console.warn("Validate Code Local Check:", e);
-    }
+    } catch (e) {}
 
-    // 로컬 스토리지에서 교사 생성 코드 직접 확인
     try {
         const localTeachers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
         const foundLocal = localTeachers.find(t => t.classCode && t.classCode.toUpperCase() === cleanCode);
