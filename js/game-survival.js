@@ -1,213 +1,243 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 바른말 수호대 어절 서바이벌 컨트롤러 (game-survival.js)
+   🎮 [존댓말 차원 탐험대] 반말 몬스터 던전 (재도전 보장 & 커스텀 문제 연동) (game-survival.js)
    ========================================================================== */
 
-import { SURVIVAL_PROBLEMS_DB } from './data.js';
-import { saveLeaderboardScore, getCurrentUserSession, updateStudentProgress } from './firebase-config.js';
+import { SURVIVAL_QUESTIONS } from './data.js';
+import { saveLeaderboardScore, getCurrentUserSession } from './firebase-config.js';
 
 let hearts = 3;
 let timerSeconds = 300;
 let timerInterval = null;
-let correctCount = 0;
+let currentScoreCount = 0;
+let currentQuestion = null;
 let assembledWords = [];
-let wrongHistoryList = [];
-let currentProblem = null;
+let wrongLogsInSession = [];
+let customQuestionsList = [];
 
-export function startSurvivalGame(onGameOverCallback, onHomeClickCallback) {
+export function startSurvivalGame(onGameOverCallback, onHomeExitCallback) {
     hearts = 3;
     timerSeconds = 300;
-    correctCount = 0;
+    currentScoreCount = 0;
+    wrongLogsInSession = [];
     assembledWords = [];
-    wrongHistoryList = [];
 
-    // 10번: 🏠 로비로 (홈으로) 버튼 이벤트
+    // 교사 커스텀 문제 가져오기
+    loadTeacherCustomQuestions();
+
+    updateUI();
+    loadNextQuestion();
+
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timerSeconds--;
+        if (timerSeconds <= 0) {
+            endSurvivalGame(onGameOverCallback);
+        } else {
+            updateTimerDisplay();
+        }
+    }, 1000);
+
+    // 🏠 로비로 이탈 버튼
     const btnHome = document.getElementById('btn-home-survival');
     if (btnHome) {
         btnHome.onclick = () => {
-            if (confirm("🏠 진행 중인 바른말 수호대를 종료하고 로비로 돌아가시겠습니까?")) {
-                clearInterval(timerInterval);
-                onHomeClickCallback();
+            if (confirm("🎮 '반말 몬스터 던전'을 중단하고 로비로 돌아가시겠습니까?")) {
+                if (timerInterval) clearInterval(timerInterval);
+                onHomeExitCallback();
             }
         };
     }
 
-    updateHeartsUI();
-    startTimer(onGameOverCallback);
-    loadRandomProblem(onGameOverCallback);
+    const btnReset = document.getElementById('btn-reset-blocks');
+    if (btnReset) {
+        btnReset.onclick = resetAssembledSlots;
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-sentence');
+    if (btnSubmit) {
+        btnSubmit.onclick = () => submitSentence(onGameOverCallback);
+    }
 }
 
-function updateHeartsUI() {
-    let hStr = '';
-    for (let i = 0; i < hearts; i++) hStr += '❤️';
-    for (let i = hearts; i < 3; i++) hStr += '🖤';
-    document.getElementById('survival-hearts').textContent = hStr;
-    document.getElementById('survival-score-count').textContent = correctCount;
-}
-
-function startTimer(onGameOverCallback) {
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        timerSeconds--;
-        const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-        const secs = String(timerSeconds % 60).padStart(2, '0');
-        document.getElementById('survival-timer').textContent = `${mins}:${secs}`;
-
-        if (timerSeconds <= 0) {
-            clearInterval(timerInterval);
-            endGame(onGameOverCallback, "⏱️ 5분 제한시간이 종료되었습니다!");
+function loadTeacherCustomQuestions() {
+    try {
+        const saved = localStorage.getItem("manner_explorer_custom_quests");
+        if (saved) {
+            customQuestionsList = JSON.parse(saved);
         }
-    }, 1000);
+    } catch (e) {}
 }
 
-// 14번: 20개 이상 문장 DB 무작위 랜덤 추출
-function loadRandomProblem(onGameOverCallback) {
+function updateUI() {
+    const heartsEl = document.getElementById('survival-hearts');
+    if (heartsEl) heartsEl.textContent = '❤️'.repeat(hearts);
+    const scoreEl = document.getElementById('survival-score-count');
+    if (scoreEl) scoreEl.textContent = currentScoreCount;
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+    const timerEl = document.getElementById('survival-timer');
+    if (!timerEl) return;
+    const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+    const s = (timerSeconds % 60).toString().padStart(2, '0');
+    timerEl.textContent = `${m}:${s}`;
+}
+
+function loadNextQuestion() {
     assembledWords = [];
     renderAssembledSlots();
 
-    const randomIndex = Math.floor(Math.random() * SURVIVAL_PROBLEMS_DB.length);
-    currentProblem = SURVIVAL_PROBLEMS_DB[randomIndex];
+    // 커스텀 문제와 기본 문제 통합
+    let pool = [...SURVIVAL_QUESTIONS];
+    if (customQuestionsList.length > 0) {
+        pool = [...customQuestionsList, ...SURVIVAL_QUESTIONS];
+    }
 
-    document.getElementById('boss-attack-text').textContent = currentProblem.bossAttack;
+    const randomIdx = Math.floor(Math.random() * pool.length);
+    currentQuestion = pool[randomIdx];
 
-    const blocksContainer = document.getElementById('blocks-container');
-    blocksContainer.innerHTML = '';
+    const bossTextEl = document.getElementById('boss-attack-text');
+    if (bossTextEl) bossTextEl.textContent = `"${currentQuestion.wrong}"`;
 
-    const shuffledPool = [...currentProblem.pool].sort(() => Math.random() - 0.5);
-    shuffledPool.forEach(word => {
-        const block = document.createElement('button');
-        block.className = 'word-block';
-        block.textContent = word;
-        block.onclick = () => {
-            if (!assembledWords.includes(word)) {
-                assembledWords.push(word);
-                block.style.opacity = '0.3';
-                block.disabled = true;
-                renderAssembledSlots();
-            }
+    // 어절 블록 셔플
+    const blocks = [...currentQuestion.correctBlocks].sort(() => Math.random() - 0.5);
+    renderWordBlocks(blocks);
+}
+
+function renderWordBlocks(blocks) {
+    const container = document.getElementById('blocks-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    blocks.forEach((word) => {
+        const btn = document.createElement('button');
+        btn.className = 'word-block';
+        btn.textContent = word;
+        btn.onclick = () => {
+            assembledWords.push(word);
+            btn.style.display = 'none';
+            renderAssembledSlots();
         };
-        blocksContainer.appendChild(block);
+        container.appendChild(btn);
     });
-
-    document.getElementById('btn-reset-blocks').onclick = () => {
-        assembledWords = [];
-        renderAssembledSlots();
-        loadRandomProblem(onGameOverCallback);
-    };
-
-    document.getElementById('btn-submit-sentence').onclick = () => {
-        checkAnswer(currentProblem, onGameOverCallback);
-    };
 }
 
 function renderAssembledSlots() {
-    const slots = document.getElementById('assembled-slots');
-    slots.innerHTML = '';
-    assembledWords.forEach((w, i) => {
-        const slotBlock = document.createElement('div');
-        slotBlock.className = 'word-block';
-        slotBlock.textContent = w;
-        slotBlock.onclick = () => {
-            assembledWords.splice(i, 1);
+    const container = document.getElementById('assembled-slots');
+    if (!container) return;
+    container.innerHTML = '';
+
+    assembledWords.forEach((word, idx) => {
+        const slot = document.createElement('span');
+        slot.className = 'word-block';
+        slot.textContent = word;
+        slot.onclick = () => {
+            assembledWords.splice(idx, 1);
             renderAssembledSlots();
-            const blocks = document.querySelectorAll('#blocks-container .word-block');
-            blocks.forEach(b => {
-                if (b.textContent === w) {
-                    b.style.opacity = '1';
-                    b.disabled = false;
-                }
-            });
+            restoreWordBlocks();
         };
-        slots.appendChild(slotBlock);
+        container.appendChild(slot);
     });
 }
 
-async function checkAnswer(prob, onGameOverCallback) {
-    const userSentence = assembledWords.join(' ');
-    // 15번: 마침표가 들어간 하나의 완벽한 올바른 문장
-    const correctSentence = prob.correctOrder.join(' ');
+function resetAssembledSlots() {
+    assembledWords = [];
+    renderAssembledSlots();
+    restoreWordBlocks();
+}
+
+function restoreWordBlocks() {
+    const container = document.getElementById('blocks-container');
+    if (!container || !currentQuestion) return;
+
+    const allBlocks = currentQuestion.correctBlocks;
+    const remaining = [...allBlocks];
+    
+    assembledWords.forEach(w => {
+        const i = remaining.indexOf(w);
+        if (i >= 0) remaining.splice(i, 1);
+    });
+
+    renderWordBlocks(remaining.sort(() => Math.random() - 0.5));
+}
+
+// 7번 요구사항: 정답 실패 시 하트 1개 차감 후 현재 문제를 다시 풀 수 있도록 유지!
+function submitSentence(onGameOverCallback) {
+    if (!currentQuestion) return;
+
+    const userSentence = assembledWords.join(' ').trim();
+    const correctSentence = currentQuestion.correctBlocks.join(' ').trim();
 
     if (userSentence === correctSentence) {
-        alert("✨ 정답입니다! 올바른 존댓말 한 문장으로 반말 몬스터를 물리쳤습니다!");
-        correctCount++;
-        updateHeartsUI();
-        loadRandomProblem(onGameOverCallback);
+        alert('✨ 정답입니다! 반말 몬스터를 격파했습니다!');
+        currentScoreCount++;
+        updateUI();
+        loadNextQuestion();
     } else {
         hearts--;
-        updateHeartsUI();
-
-        wrongHistoryList.push({
-            attack: prob.bossAttack,
+        updateUI();
+        wrongLogsInSession.push({
+            wrong: currentQuestion.wrong,
             userSentence: userSentence || '(미완성)',
-            correctSentence: correctSentence,
-            explanation: prob.explanation
+            correct: correctSentence
         });
 
-        const curr = getCurrentUserSession();
-        if (curr && curr.studentId) {
-            updateStudentProgress(curr.studentId, [], prob.errCategory, {
-                mode: 'SURVIVAL',
-                attack: prob.bossAttack,
-                userSentence: userSentence,
-                correctSentence: correctSentence
-            });
-        }
-
         if (hearts <= 0) {
-            clearInterval(timerInterval);
-            endGame(onGameOverCallback, "💔 하트(목숨)가 모두 소진되었습니다!");
+            alert('💔 하트를 모두 소모하였습니다!');
+            endSurvivalGame(onGameOverCallback);
         } else {
-            alert(`❌ 틀렸습니다! (하트 -1개)\n원래 자리로 흩어집니다. 정답을 맞힐 때까지 다시 조합해 보세요!`);
-            assembledWords = [];
-            loadRandomProblem(onGameOverCallback);
+            // 현재 문제를 다시 올바르게 풀도록 블록 리셋 후 유지!
+            alert(`❌ 잘못된 조립입니다! 하트 1개가 차감되었습니다. (남은 하트: ${hearts}개)\n올바른 정답 문장으로 다시 조립해 보세요!`);
+            resetAssembledSlots();
         }
     }
 }
 
-function endGame(onGameOverCallback, reasonMsg) {
-    clearInterval(timerInterval);
+function endSurvivalGame(onGameOverCallback) {
+    if (timerInterval) clearInterval(timerInterval);
 
     const curr = getCurrentUserSession();
-    const name = curr ? curr.name : '익명';
-    const classTitle = curr ? `${curr.grade || 3}학년 ${curr.classNum || 1}반` : '자유 탐험대';
-    const title = curr ? (curr.currentTitle || '🌱 새싹 탐험대 (Lv.1)') : '🌱 새싹 탐험대 (Lv.1)';
+    const entry = {
+        name: curr ? curr.name : '탐험가',
+        classTitle: curr ? `${curr.grade}학년 ${curr.classNum}반` : '학급',
+        score: currentScoreCount,
+        title: '🛡️ 반말 몬스터 던전 수호자',
+        date: new Date().toLocaleDateString('ko-KR')
+    };
 
-    saveLeaderboardScore({
-        name,
-        classTitle,
-        score: correctCount,
-        title,
-        date: new Date().toLocaleDateString()
-    });
+    saveLeaderboardScore(entry);
 
     const modal = document.getElementById('modal-survival-gameover');
-    document.getElementById('so-correct-count').textContent = correctCount;
+    const wrongList = document.getElementById('so-wrong-list');
+    document.getElementById('so-correct-count').textContent = currentScoreCount;
 
-    const wrongListContainer = document.getElementById('so-wrong-list');
-    wrongListContainer.innerHTML = '';
-
-    if (wrongHistoryList.length === 0) {
-        wrongListContainer.innerHTML = '<p>🎉 틀린 문제 없이 완벽하게 서바이벌을 정복했습니다!</p>';
-    } else {
-        wrongHistoryList.forEach((w, idx) => {
-            const item = document.createElement('div');
-            item.className = 'wrong-summary-item';
-            item.style.marginBottom = '12px';
-            item.style.textAlign = 'left';
-            item.innerHTML = `
-                <p><strong>[문제 #${idx + 1}] 반말 공격:</strong> ${w.attack}</p>
-                <p style="color: #ef476f;">❌ 내가 조합한 문장: ${w.userSentence}</p>
-                <p style="color: #06d6a0;">✅ 올바른 마침표 한 문장: ${w.correctSentence}</p>
-                <p style="font-size: 0.85rem; color: #ffd166;">💡 존댓말 핵심: ${w.explanation}</p>
-                <hr class="pixel-hr">
-            `;
-            wrongListContainer.appendChild(item);
-        });
+    if (wrongList) {
+        wrongList.innerHTML = '';
+        if (wrongLogsInSession.length === 0) {
+            wrongList.innerHTML = '<p>🎉 틀린 문제 없이 완벽하게 정복하였습니다!</p>';
+        } else {
+            wrongLogsInSession.forEach(log => {
+                const item = document.createElement('div');
+                item.className = 'wrong-log-item';
+                item.style.cssText = 'background:#1a102b; padding:8px; border-radius:4px; margin-bottom:6px; font-size:0.85rem;';
+                item.innerHTML = `
+                    <p style="color:#ef476f;">👾 반말 공격: "${log.wrong}"</p>
+                    <p style="color:#ffd166;">❌ 나의 조립: "${log.userSentence}"</p>
+                    <p style="color:#06d6a0;">✅ 올바른 정답: "${log.correct}"</p>
+                `;
+                wrongList.appendChild(item);
+            });
+        }
     }
 
-    modal.classList.remove('hidden');
+    if (modal) modal.classList.remove('hidden');
 
-    document.getElementById('btn-close-survival-modal').onclick = () => {
-        modal.classList.add('hidden');
-        onGameOverCallback();
-    };
+    const btnClose = document.getElementById('btn-close-survival-modal');
+    if (btnClose) {
+        btnClose.onclick = () => {
+            modal.classList.add('hidden');
+            onGameOverCallback();
+        };
+    }
 }

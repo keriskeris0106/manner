@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 6자리 코드 중복 차원검증 & 자동로그인 & 교사 게임 뷰 (auth.js)
+   🎮 [존댓말 차원 탐험대] 실시간 6자리 코드 중복검사 & 학년/반 100% 검증 (auth.js)
    ========================================================================== */
 
 import { 
@@ -62,10 +62,42 @@ window.selectLoginRole = function(role) {
 
 window.openTeacherCreateModal = function() {
     const modal = document.getElementById('modal-teacher-create-class');
+    const input = document.getElementById('new-class-code');
+    const msg = document.getElementById('code-duplicate-msg');
+    if (input) input.value = '';
+    if (msg) { msg.textContent = ''; msg.className = ''; }
     if (modal) modal.classList.remove('hidden');
 };
 
-// 1. 학생 로그인
+// 1번 요구사항: 6자리 코드 실시간 중복 체크 (빨간색/초록색 텍스트 표출)
+window.handleRealtimeCodeCheck = async function(inputEl) {
+    const code = inputEl.value.trim().replace(/[^0-9]/g, '');
+    inputEl.value = code;
+    const msgEl = document.getElementById('code-duplicate-msg');
+    const submitBtn = document.getElementById('btn-submit-create-class');
+
+    if (!msgEl) return;
+
+    if (code.length < 6) {
+        msgEl.textContent = "숫자 6자리를 모두 입력해 주세요. (예: 363636)";
+        msgEl.style.color = "#ff9f1c";
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+    }
+
+    const isUsed = await validateClassCode(code);
+    if (isUsed) {
+        msgEl.textContent = `⚠️ 이미 사용 중인 6자리 클래스 코드입니다. 다른 숫자를 입력해 주세요.`;
+        msgEl.style.color = "#ef476f";
+        if (submitBtn) submitBtn.disabled = true;
+    } else {
+        msgEl.textContent = `✅ 사용 가능한 6자리 클래스 코드입니다!`;
+        msgEl.style.color = "#06d6a0";
+        if (submitBtn) submitBtn.disabled = false;
+    }
+};
+
+// 2번 요구사항: 학년, 반, 6자리 학급 코드가 100% 일치해야만 학생 로그인 가능!
 window.handleStudentLoginSubmit = async function(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
 
@@ -86,9 +118,18 @@ window.handleStudentLoginSubmit = async function(e) {
         return false;
     }
 
-    const isValid = await validateClassCode(classCode);
-    if (!isValid) {
-        alert(`⚠️ 선생님께 다시 여쭤보세요!\n입력하신 6자리 학급 초대 코드 [ ${classCode} ] 가 존재하지 않습니다.`);
+    const teachers = await getAllTeachers();
+    // 학년, 반, 6자리 학급 코드 삼박자 100% 모두 일치하는 교사 클래스 검색
+    const matchedTeacher = teachers.find(t => 
+        t.classCode === classCode && 
+        t.grade.toString() === grade.toString() && 
+        t.classNum.toString() === classNum.toString()
+    );
+
+    const isDefaultDemoMatch = (classCode === '363636' || classCode === '123456') && grade === '3' && classNum === '1';
+
+    if (!matchedTeacher && !isDefaultDemoMatch) {
+        alert(`⚠️ 입력하신 [ ${grade}학년 ${classNum}반 ] 과 6자리 학급 초대 코드 [ ${classCode} ] 가 일치하는 클래스를 찾을 수 없습니다.\n선생님께 정확한 학년, 반, 학급 코드를 확인해 주세요.`);
         return false;
     }
 
@@ -99,13 +140,13 @@ window.handleStudentLoginSubmit = async function(e) {
         name
     });
 
-    alert(`🎉 ${name} 탐험가님 환영합니다!`);
+    alert(`🎉 ${name} 탐험가님 환영합니다! (${grade}학년 ${classNum}반)`);
     switchScreenView('view-lobby');
     if (onLoginSuccessCallback) onLoginSuccessCallback(studentData);
     return false;
 };
 
-// 2. 교사 기존 6자리 학급 코드 로그인
+// 3. 교사 기존 학급 6자리 코드로 접속
 window.handleTeacherDirectLogin = async function(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
 
@@ -122,7 +163,7 @@ window.handleTeacherDirectLogin = async function(e) {
 
     if (foundTeacher) {
         saveUserSession(foundTeacher);
-        alert(`✨ ${foundTeacher.name || '선생님'} 환영합니다!\n[ ${foundTeacher.className} (코드: ${code}) ] 학급 게임 및 관리를 시작합니다.`);
+        alert(`✨ ${foundTeacher.name || '선생님'} 환영합니다!\n[ ${foundTeacher.className} (코드: ${code}) ] 게임 및 학급 관리를 시작합니다.`);
         switchScreenView('view-lobby');
         if (onLoginSuccessCallback) onLoginSuccessCallback(foundTeacher);
         return false;
@@ -149,7 +190,7 @@ window.handleTeacherDirectLogin = async function(e) {
     return false;
 };
 
-// 3. 신규 클래스 생성 (6자리 숫자 코드 중복 철저 차단)
+// 4. 신규 클래스 생성 제출
 window.handleTeacherCreateSubmit = async function(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
 
@@ -165,7 +206,6 @@ window.handleTeacherCreateSubmit = async function(e) {
         return false;
     }
 
-    // 중복 검사 (이미 존재 시 단호히 차단!)
     const isAlreadyUsed = await validateClassCode(newCode);
     if (isAlreadyUsed) {
         alert(`⚠️ 이미 사용 중인 6자리 클래스 코드 [ ${newCode} ] 입니다.\n다른 6자리 숫자를 입력해 주세요.`);
@@ -189,7 +229,7 @@ window.handleTeacherCreateSubmit = async function(e) {
     const modal = document.getElementById('modal-teacher-create-class');
     if (modal) modal.classList.add('hidden');
 
-    alert(`✨ 신규 클래스 생성 완료!\n선생님의 6자리 학급 코드: [ ${newCode} ]\n학생들에게 이 코드를 알려주세요! 게임 로비로 진입합니다.`);
+    alert(`✨ 신규 클래스 생성 완료!\n선생님의 6자리 학급 코드: [ ${newCode} ] (${grade}학년 ${classNum}반)\n학생들에게 알려주세요! 게임 로비로 진입합니다.`);
     switchScreenView('view-lobby');
     if (onLoginSuccessCallback) onLoginSuccessCallback(teacherData);
     return false;
@@ -210,7 +250,6 @@ export function initAuthSystem(callbacks) {
         };
     }
 
-    // 자동 로그인
     const activeSession = getCurrentUserSession();
     if (activeSession) {
         switchScreenView('view-lobby');

@@ -1,25 +1,23 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 월드 퀘스트 세부 장소 & 대화 컨트롤러 (game-quest.js)
+   🎮 [존댓말 차원 탐험대] 5턴 연속 대화 & 렌덤 선택지 & 100점 배지 획득 시스템 (game-quest.js)
    ========================================================================== */
 
-import { INITIAL_WORLDS_DATA } from './data.js';
-import { updateStudentProgress, getCurrentUserSession, getCreatorPrompt } from './firebase-config.js';
+import { INITIAL_WORLDS_DATA, generate5TurnQuestData } from './data.js';
+import { updateStudentProgress, getCurrentUserSession } from './firebase-config.js';
 
 let currentWorldId = 1;
 let currentSubLocationIdx = 0;
+let currentTurnIdx = 0;
 let currentScore = 100;
+let questScenarios = [];
 let earnedInQuest = [];
 
 export function startQuestSession(worldId, onFinishCallback) {
     currentWorldId = worldId;
     currentSubLocationIdx = 0;
-    currentScore = 100;
     earnedInQuest = [];
 
     const worldData = INITIAL_WORLDS_DATA[worldId];
-    document.getElementById('quest-current-score').textContent = currentScore;
-
-    // 세부 장소 선택 버튼 10개 렌더링
     renderSubLocationButtons(worldData, onFinishCallback);
 }
 
@@ -29,29 +27,49 @@ function renderSubLocationButtons(worldData, onFinishCallback) {
     selectorBox.classList.remove('hidden');
     container.innerHTML = '';
 
+    const currUser = getCurrentUserSession();
+    const earnedBadges = (currUser && currUser.earnedBadges) ? currUser.earnedBadges : [];
+
     worldData.locations.forEach((loc, idx) => {
+        const badgeId = `W${currentWorldId}_B${idx + 1}`;
+        const isPassed = earnedBadges.includes(badgeId) || earnedInQuest.includes(badgeId);
+
         const btn = document.createElement('button');
         btn.className = `btn-sub-loc ${idx === currentSubLocationIdx ? 'active' : ''}`;
-        btn.textContent = `${idx + 1}. ${loc.name}`;
+        btn.textContent = `${isPassed ? '✅ ' : ''}${idx + 1}. ${loc.name}`;
         btn.onclick = () => {
             currentSubLocationIdx = idx;
             document.querySelectorAll('.btn-sub-loc').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            loadSubLocationQuest(loc, onFinishCallback);
+            startSubLocationQuest(loc, onFinishCallback);
         };
         container.appendChild(btn);
     });
 
-    // 첫 번째 세부 장소 자동 실행
-    loadSubLocationQuest(worldData.locations[currentSubLocationIdx], onFinishCallback);
+    startSubLocationQuest(worldData.locations[currentSubLocationIdx], onFinishCallback);
 }
 
-function loadSubLocationQuest(locationData, onFinishCallback) {
+function startSubLocationQuest(locationData, onFinishCallback) {
+    currentTurnIdx = 0;
+    currentScore = 100;
+    questScenarios = generate5TurnQuestData(currentWorldId, locationData.name);
+
+    document.getElementById('quest-current-score').textContent = currentScore;
     const worldData = INITIAL_WORLDS_DATA[currentWorldId];
     document.getElementById('quest-location-name').textContent = `${worldData.name} - [${locationData.name}]`;
-    
+
     const chatBody = document.getElementById('messenger-chat-body');
     chatBody.innerHTML = '';
+
+    loadTurnQuestion(locationData, onFinishCallback);
+}
+
+function loadTurnQuestion(locationData, onFinishCallback) {
+    const turnCounter = document.getElementById('quest-turn-counter');
+    if (turnCounter) turnCounter.textContent = `대화 턴: ${currentTurnIdx + 1} / 5`;
+
+    const currentTurnData = questScenarios[currentTurnIdx];
+    const chatBody = document.getElementById('messenger-chat-body');
 
     // NPC 대사 렌더링
     const npcBubble = document.createElement('div');
@@ -59,33 +77,32 @@ function loadSubLocationQuest(locationData, onFinishCallback) {
     npcBubble.innerHTML = `
         <div class="chat-avatar">${locationData.npcAvatar}</div>
         <div class="chat-content-box">
-            <span class="chat-sender-name">${locationData.npcName}</span>
-            <div class="chat-bubble">${locationData.npcDialog}</div>
+            <span class="chat-sender-name">${locationData.npcName} (턴 ${currentTurnIdx + 1}/5)</span>
+            <div class="chat-bubble">${currentTurnData.dialog}</div>
         </div>
     `;
     chatBody.appendChild(npcBubble);
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    // 16번: 선택지 버튼 3개 렌더링 (올바른 표현, 높임 미숙, 반말)
+    // 3번 요구사항: 1, 2, 3번 선택지 무작위 셔플 (Fisher-Yates Shuffle)
+    const shuffledOptions = [...currentTurnData.options].sort(() => Math.random() - 0.5);
+
     const optionsContainer = document.getElementById('quest-options-container');
     optionsContainer.innerHTML = '';
 
-    // 제작자 프롬프트 로드
-    const creatorPrompt = getCreatorPrompt(currentWorldId);
-
-    locationData.options.forEach((opt, idx) => {
+    shuffledOptions.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'btn-option';
         btn.textContent = `${idx + 1}. ${opt.text}`;
-        btn.onclick = () => handleUserOptionSelection(opt, locationData, onFinishCallback);
+        btn.onclick = () => handleUserTurnSelection(opt, locationData, onFinishCallback);
         optionsContainer.appendChild(btn);
     });
 }
 
-function handleUserOptionSelection(selectedOption, locationData, onFinishCallback) {
+function handleUserTurnSelection(selectedOption, locationData, onFinishCallback) {
     const chatBody = document.getElementById('messenger-chat-body');
 
-    // 학생 대사 추가
+    // 학생 선택 대사 추가
     const userBubble = document.createElement('div');
     userBubble.className = 'chat-bubble-wrapper user';
     userBubble.innerHTML = `
@@ -97,29 +114,25 @@ function handleUserOptionSelection(selectedOption, locationData, onFinishCallbac
     `;
     chatBody.appendChild(userBubble);
 
-    // 6번: 점수 차감 계산 오류 완전 교정! (scoreDelta 수치와 실제 currentScore 100% 동일 처리)
-    const delta = selectedOption.scoreDelta || (selectedOption.isCorrect ? 20 : -20);
-    currentScore = Math.max(0, currentScore + delta);
+    // 4번 요구사항: 정답 시 유지, 틀리면 -10점 차감!
+    if (!selectedOption.isCorrect) {
+        currentScore = Math.max(0, currentScore - 10);
+    }
     document.getElementById('quest-current-score').textContent = currentScore;
 
-    // 피드백 말풍선 추가
+    // 피드백 말풍선
     const fbBubble = document.createElement('div');
     fbBubble.className = `feedback-bubble ${selectedOption.isCorrect ? 'correct' : 'wrong'}`;
     fbBubble.textContent = selectedOption.isCorrect 
-        ? `✨ [AI 판정: 정답!] ${selectedOption.feedback}`
-        : `❌ [AI 판정: 오류 (점수 ${delta}점)] ${selectedOption.feedback}`;
+        ? `✨ [정답!] ${selectedOption.feedback}`
+        : `❌ [오답 (-10점)] ${selectedOption.feedback}`;
     chatBody.appendChild(fbBubble);
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    // 배지 획득 및 오답 DB 저장
-    const badgeId = `W${currentWorldId}_B${currentSubLocationIdx + 1}`;
-    if (selectedOption.isCorrect) {
-        earnedInQuest.push(badgeId);
-    }
-
+    // 선택 이력 저장
     const curr = getCurrentUserSession();
     if (curr && curr.studentId) {
-        updateStudentProgress(curr.studentId, selectedOption.isCorrect ? [badgeId] : [], selectedOption.errType, {
+        updateStudentProgress(curr.studentId, [], selectedOption.errType, {
             mode: 'QUEST',
             worldId: currentWorldId,
             location: locationData.name,
@@ -129,31 +142,48 @@ function handleUserOptionSelection(selectedOption, locationData, onFinishCallbac
         });
     }
 
-    // 퀘스트 완료 처리
+    // 다음 턴 또는 완료
     setTimeout(() => {
-        finishSubLocationQuest(selectedOption.isCorrect, badgeId, onFinishCallback);
-    }, 1500);
+        currentTurnIdx++;
+        if (currentTurnIdx < 5) {
+            loadTurnQuestion(locationData, onFinishCallback);
+        } else {
+            finishSubLocationSession(locationData, onFinishCallback);
+        }
+    }, 1400);
 }
 
-function finishSubLocationQuest(isCorrect, badgeId, onFinishCallback) {
+function finishSubLocationSession(locationData, onFinishCallback) {
     const modal = document.getElementById('modal-quest-result');
     const badgeAnim = document.getElementById('badge-reward-anim');
     document.getElementById('modal-final-score').textContent = currentScore;
 
-    if (isCorrect) {
-        document.getElementById('modal-result-title').textContent = '🎉 세부 장소 탐험 배지 획득!';
+    const badgeId = `W${currentWorldId}_B${currentSubLocationIdx + 1}`;
+
+    // 4번 요구사항: 최종 점수가 100점이어야만 배지 획득!
+    if (currentScore === 100) {
+        document.getElementById('modal-result-title').textContent = '🎉 100점 만점! 탐험 배지 획득!';
         badgeAnim.classList.remove('hidden');
-        document.getElementById('reward-badge-icon').textContent = '🎖️';
-        document.getElementById('reward-badge-name').textContent = `${currentWorldId}월드 배지 #${currentSubLocationIdx + 1}`;
+        document.getElementById('reward-badge-icon').textContent = locationData.npcAvatar || '🎖️';
+        document.getElementById('reward-badge-name').textContent = `${locationData.name} 배지`;
+        document.getElementById('modal-score-comment').textContent = `5번의 존댓말 대화를 오답 없이 완벽하게 마쳤습니다!`;
+        earnedInQuest.push(badgeId);
+
+        const curr = getCurrentUserSession();
+        if (curr && curr.studentId) {
+            updateStudentProgress(curr.studentId, [badgeId], null);
+        }
     } else {
-        document.getElementById('modal-result-title').textContent = '👍 장소 탐험 완료!';
+        document.getElementById('modal-result-title').textContent = '👍 5턴 대화 완료 (재도전 필요)';
         badgeAnim.classList.add('hidden');
+        document.getElementById('modal-score-comment').textContent = `최종 점수가 ${currentScore}점입니다. 100점 만점을 받아야 배지를 획득할 수 있습니다. 다시 도전해 보세요!`;
     }
 
     modal.classList.remove('hidden');
 
     document.getElementById('btn-close-quest-modal').onclick = () => {
         modal.classList.add('hidden');
+        renderSubLocationButtons(INITIAL_WORLDS_DATA[currentWorldId], onFinishCallback);
         onFinishCallback(earnedInQuest);
     };
 }

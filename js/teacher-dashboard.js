@@ -1,27 +1,17 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 교사 대시보드 & 리포트 인쇄 컨트롤러 (teacher-dashboard.js)
+   🎮 [존댓말 차원 탐험대] 교사 대시보드 & 커스텀 퀘스트 실시간 반영 (teacher-dashboard.js)
    ========================================================================== */
 
 import { getStudentsByClassCode, getCurrentUserSession } from './firebase-config.js';
 
-let classStudents = [];
-
 export async function initTeacherDashboard() {
-    const teacherUser = getCurrentUserSession();
-    if (!teacherUser) return;
+    const user = getCurrentUserSession();
+    const classCode = (user && user.classCode) ? user.classCode : '363636';
 
-    // 대시보드 정보 갱신
-    document.getElementById('dash-class-title').textContent = teacherUser.className || `${teacherUser.grade || 3}학년 ${teacherUser.classNum || 1}반`;
-    document.getElementById('dash-invite-code').innerHTML = `클래스 초대코드: <strong>${teacherUser.classCode || 'EXP123'}</strong>`;
-
-    // 학생 목록 불러오기
-    classStudents = await getStudentsByClassCode(teacherUser.classCode);
-    renderStudentList(classStudents);
-
-    // 인쇄/PDF 버튼 이벤트 (요구사항 4번)
-    document.getElementById('btn-print-report').onclick = () => {
-        window.print();
-    };
+    const dashTitle = document.getElementById('dash-class-title');
+    const dashCode = document.getElementById('dash-code-num');
+    if (dashTitle) dashTitle.textContent = user ? user.className : '3학년 긍정열정반';
+    if (dashCode) dashCode.textContent = classCode;
 
     // 대시보드 탭 전환
     const tabs = document.querySelectorAll('.dash-tab');
@@ -30,54 +20,89 @@ export async function initTeacherDashboard() {
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
-            const dashtabName = tab.getAttribute('data-dashtab');
+            const target = tab.getAttribute('data-dashtab');
             document.querySelectorAll('.dashtab-panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(`dashtab-${dashtabName}`).classList.add('active');
+            const panel = document.getElementById(`dashtab-${target}`);
+            if (panel) panel.classList.add('active');
         };
     });
 
-    // 커스텀 퀘스트 폼 제출 (요구사항 6번)
-    const formCustom = document.getElementById('form-custom-quest');
-    if (formCustom) {
-        formCustom.onsubmit = (e) => {
+    // 학생 목록 불러오기
+    await loadStudentList(classCode);
+
+    // 8번 요구사항: 커스텀 퀘스트 작성 폼 처리 및 던전에 즉시 반영!
+    const formCQ = document.getElementById('form-custom-quest');
+    if (formCQ) {
+        formCQ.onsubmit = (e) => {
             e.preventDefault();
-            const title = document.getElementById('cq-title').value;
-            alert(`✨ 커스텀 문제 "${title}"가 성공적으로 저장되었습니다!`);
-            formCustom.reset();
+            const title = document.getElementById('cq-title').value.trim();
+            const wrong = document.getElementById('cq-wrong').value.trim();
+            const correctStr = document.getElementById('cq-correct').value.trim();
+
+            if (!wrong || !correctStr) {
+                alert('⚠️ 공격 반말 문장과 정답 문장을 올바르게 입력해 주세요.');
+                return;
+            }
+
+            const correctBlocks = correctStr.split(' ').filter(w => w.length > 0);
+
+            const newQuest = {
+                title,
+                wrong,
+                correctBlocks
+            };
+
+            const saved = JSON.parse(localStorage.getItem("manner_explorer_custom_quests") || "[]");
+            saved.push(newQuest);
+            localStorage.setItem("manner_explorer_custom_quests", JSON.stringify(saved));
+
+            alert(`✨ 커스텀 퀘스트 [ ${title} ] 추가 완료!\n선생님이 만든 이 문제가 '반말 몬스터 던전' 문제 풀이에 즉시 출제됩니다.`);
+            formCQ.reset();
         };
+    }
+
+    // 인쇄/PDF 기능
+    const btnPrint = document.getElementById('btn-print-report');
+    if (btnPrint) {
+        btnPrint.onclick = () => window.print();
     }
 }
 
-function renderStudentList(students) {
-    const ul = document.getElementById('student-ul-list');
-    document.getElementById('dash-student-count').textContent = students.length;
-    ul.innerHTML = '';
+async function loadStudentList(classCode) {
+    const students = await getStudentsByClassCode(classCode);
+    const countEl = document.getElementById('dash-student-count');
+    const ulList = document.getElementById('student-ul-list');
+    
+    if (countEl) countEl.textContent = students.length;
+    if (!ulList) return;
 
+    ulList.innerHTML = '';
     if (students.length === 0) {
-        ul.innerHTML = '<li>아직 등록된 학생이 없습니다.</li>';
+        ulList.innerHTML = '<li style="cursor:default; color:var(--text-muted);">아직 학급에 들어온 학생이 없습니다.</li>';
         return;
     }
 
-    students.forEach((st, idx) => {
+    students.forEach((s) => {
         const li = document.createElement('li');
-        li.textContent = `${st.grade}학년 ${st.classNum}반 ${st.name} (${st.currentTitle || '새싹 탐험대'})`;
+        li.textContent = `${s.name} (${s.grade}학년 ${s.classNum}반)`;
         li.onclick = () => {
-            document.querySelectorAll('#student-ul-list li').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#student-ul-list li').forEach(l => l.classList.remove('active'));
             li.classList.add('active');
-            renderStudentAnalysis(st);
+            renderStudentDetail(s);
         };
-        ul.appendChild(li);
+        ulList.appendChild(li);
     });
 
-    // 첫 번째 학생 자동 선택
     if (students.length > 0) {
-        ul.children[0].click();
+        renderStudentDetail(students[0]);
     }
 }
 
-function renderStudentAnalysis(student) {
-    document.getElementById('detail-student-name').textContent = `${student.name} 학생 진단 리포트`;
-    document.getElementById('student-analysis-content').classList.remove('hidden');
+function renderStudentDetail(student) {
+    const nameEl = document.getElementById('detail-student-name');
+    const content = document.getElementById('student-analysis-content');
+    if (nameEl) nameEl.textContent = `${student.name} 학생 진단 리포트`;
+    if (content) content.classList.remove('hidden');
 
     const stats = student.errorStats || { OBJECT_HONORIFIC: 0, APJON: 0, SPECIAL_WORD: 0, SUBJECT_OBJECT: 0 };
     document.getElementById('err-object').textContent = `${stats.OBJECT_HONORIFIC || 0}회`;
@@ -85,24 +110,22 @@ function renderStudentAnalysis(student) {
     document.getElementById('err-special').textContent = `${stats.SPECIAL_WORD || 0}회`;
     document.getElementById('err-subject').textContent = `${stats.SUBJECT_OBJECT || 0}회`;
 
-    // 선택 오답 로그 재현
-    const logsBox = document.getElementById('student-logs-recreation');
-    logsBox.innerHTML = '';
-
-    const wrongLogs = student.wrongLogs || [];
-    if (wrongLogs.length === 0) {
-        logsBox.innerHTML = '<p class="text-muted">아직 수집된 오답 로그가 없습니다.</p>';
-    } else {
-        wrongLogs.forEach((log, i) => {
-            const logDiv = document.createElement('div');
-            logDiv.style.marginBottom = '8px';
-            logDiv.style.paddingBottom = '8px';
-            logDiv.style.borderBottom = '1px solid #2e265c';
-            logDiv.innerHTML = `
-                <p><strong>[로그 #${i+1}]</strong> 선택지: "${log.userChoice || log.userSentence || ''}"</p>
-                <p style="color: #ef476f;">⚠️ 분석 피드백: ${log.feedback || log.attack || ''}</p>
-            `;
-            logsBox.appendChild(logDiv);
-        });
+    const recreationBox = document.getElementById('student-logs-recreation');
+    if (recreationBox) {
+        recreationBox.innerHTML = '';
+        const logs = student.wrongLogs || [];
+        if (logs.length === 0) {
+            recreationBox.innerHTML = '<p style="color:#06d6a0;">🎉 오답 이력이 없습니다. 올바른 존댓말을 매우 잘 사용하고 있습니다!</p>';
+        } else {
+            logs.forEach(l => {
+                const item = document.createElement('div');
+                item.style.cssText = 'border-bottom:1px solid #2e265c; padding:6px 0;';
+                item.innerHTML = `
+                    <p style="color:#ffd166;">📌 장소: ${l.location || '퀘스트'} | 학생 선택: "${l.userChoice}"</p>
+                    <p style="color:#ef476f;">💡 AI 피드백: ${l.feedback}</p>
+                `;
+                recreationBox.appendChild(item);
+            });
+        }
     }
 }

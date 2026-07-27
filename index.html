@@ -30,7 +30,6 @@
                 </div>
             </div>
             <div class="gnb-right">
-                <!-- 3번: 교사인 경우에만 보이는 '학생 관리' 버튼 -->
                 <button id="btn-teacher-manage" class="btn-pixel btn-success btn-compact hidden" type="button">👩‍🏫 학생 관리</button>
                 <button id="btn-creator-mode" class="btn-pixel btn-warning btn-compact" type="button" title="제작자 전용 시나리오/프롬프트 템플릿 관리">🛠️ 제작자 마스터</button>
                 <button id="btn-sound-toggle" class="btn-pixel btn-icon" type="button" title="음악 켜기/끄기">🎵</button>
@@ -55,7 +54,7 @@
                         <div id="tab-student-login" class="role-card active" onclick="if(window.selectLoginRole) window.selectLoginRole('student');">
                             <div class="role-icon">🎒</div>
                             <h2>학생 탐험대 로그인</h2>
-                            <p>선생님이 주신 클래스 코드로 입장!</p>
+                            <p>선생님이 주신 학년, 반, 클래스 코드로 입장!</p>
                         </div>
                         <div id="tab-teacher-login" class="role-card" onclick="if(window.selectLoginRole) window.selectLoginRole('teacher');">
                             <div class="role-icon">👩‍🏫</div>
@@ -125,7 +124,7 @@
                 </div>
             </section>
 
-            <!-- [화면 2] 게임 로비 (교사와 학생 모두 동일하게 이용!) -->
+            <!-- [화면 2] 게임 로비 -->
             <section id="view-lobby" class="view-screen hidden">
                 <div class="lobby-layout">
                     <aside class="lobby-sidebar pixel-box">
@@ -138,6 +137,7 @@
                         <hr class="pixel-hr">
                         <div class="badge-collection-box">
                             <h3>🎖️ 수집한 배지 (<span id="earned-badge-count">0</span>/50)</h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">💡 배지를 클릭하면 올바른 존댓말 설명이 뜹니다!</p>
                             <div id="badge-grid" class="badge-grid-50"></div>
                         </div>
                     </aside>
@@ -145,7 +145,8 @@
                     <div class="lobby-main-area">
                         <div class="mode-tabs">
                             <button class="mode-tab active" data-tab="world-map" type="button">🗺️ 월드 퀘스트 (스토리)</button>
-                            <button class="mode-tab" data-tab="survival" type="button">🛡️ 바른말 수호대 (서바이벌)</button>
+                            <!-- 7번 요구사항 명칭 반영 -->
+                            <button class="mode-tab" data-tab="survival" type="button">🛡️ 반말 몬스터 던전 (어절 서바이벌)</button>
                             <button class="mode-tab" data-tab="ai-notes" type="button">💡 AI 맞춤 오답노트</button>
                         </div>
 
@@ -190,7 +191,7 @@
                                     <div class="world-badge-status" id="wb-5">0/10</div>
                                     <div class="world-icon">👑</div>
                                     <h3>월드 5: 조선시대 타임슬립</h3>
-                                    <p class="world-desc">특수 어휘 (진지, 연세, 성함, 주무시다 등)</p>
+                                    <p class="world-desc">특수 어휘 (진지, 연세, 성함, 댁 등)</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
                                     <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
                                 </div>
@@ -207,19 +208,19 @@
                         <div id="tab-content-survival" class="tab-panel hidden">
                             <div class="survival-layout-container">
                                 <div class="survival-intro-box pixel-box">
-                                    <h2>🛡️ 바른말 수호대 (어절 서바이벌)</h2>
+                                    <h2>🛡️ 반말 몬스터 던전 (어절 서바이벌)</h2>
                                     <p>반말 몬스터의 공격에 맞서 올바른 어절 블록을 완벽한 존댓말 한 문장으로 조립하세요!</p>
                                     <div class="rules-list">
-                                        <div class="rule-item">❤️ <strong>목숨 3개</strong>: 틀릴 시 원래 자리로 흩어지며 하트 1개 차감됩니다.</div>
-                                        <div class="rule-item">⏱️ <strong>제한시간 5분</strong>: 5분 카운트다운 안에 최다 연속 정답에 도전하세요!</div>
-                                        <div class="rule-item">📋 <strong>종료 시 오답 노출</strong>: 게임 종료 시 틀린 문제 요약 팝업이 노출됩니다.</div>
+                                        <div class="rule-item">❤️ <strong>목숨 3개</strong>: 틀릴 시 하트 1개가 차감되며 올바르게 맞힐 때까지 재도전합니다!</div>
+                                        <div class="rule-item">⏱️ <strong>제한시간 5분</strong>: 5분 안에 선생님의 커스텀 문제와 던전 몬스터를 격파하세요!</div>
+                                        <div class="rule-item">📋 <strong>선생님 맞춤 문제 출제</strong>: 선생님이 직접 만든 문제가 던전에 우선 출제됩니다.</div>
                                     </div>
                                     <button id="btn-start-survival" class="btn-pixel btn-warning btn-lg" type="button">
-                                        ⚔️ 서바이벌 도전 시작!
+                                        ⚔️ 반말 몬스터 던전 도전 시작!
                                     </button>
                                 </div>
                                 <div class="survival-hall-box pixel-box">
-                                    <h3>🏆 바른말 수호대 명예의 전당 (최다 문제를 맞힌 탐험가)</h3>
+                                    <h3>🏆 반말 몬스터 던전 명예의 전당 (최다 문제 정복자)</h3>
                                     <table class="pixel-table">
                                         <thead>
                                             <tr>
@@ -255,6 +256,7 @@
                         <button id="btn-exit-quest" class="btn-pixel btn-warning btn-sm" type="button">⬅️ 월드 지도로</button>
                         <div class="quest-title-info">
                             <h2 id="quest-location-name">월드 1 - [세부 장소]</h2>
+                            <span id="quest-turn-counter" class="invite-code-pill" style="font-size: 0.85rem;">대화 턴: 1 / 5</span>
                         </div>
                         <div class="quest-score-info">
                             점수: <span id="quest-current-score">100</span>점
@@ -262,20 +264,20 @@
                     </div>
 
                     <div id="sub-location-selector" class="sub-location-selector">
-                        <h3>📌 탐험할 세부 장소를 선택하세요:</h3>
+                        <h3>📌 탐험할 세부 장소를 선택하세요 (성공 시 ✅ 체크 표시):</h3>
                         <div id="sub-location-buttons" class="sub-location-buttons"></div>
                     </div>
 
                     <div id="messenger-chat-body" class="messenger-chat-body"></div>
 
                     <div class="quest-controls-footer">
-                        <p class="control-prompt">💡 알맞은 존댓말 표현을 선택하세요!</p>
+                        <p class="control-prompt">💡 알맞은 존댓말 표현을 선택하세요! (틀리면 -10점 차감, 100점 만점 시 배지 획득)</p>
                         <div id="quest-options-container" class="quest-options-grid"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- [화면 4] 바른말 수호대 플레이 -->
+            <!-- [화면 4] 반말 몬스터 던전 플레이 -->
             <section id="view-survival" class="view-screen hidden">
                 <div class="survival-container pixel-box">
                     <div class="survival-header">
@@ -308,7 +310,7 @@
                 </div>
             </section>
 
-            <!-- [화면 5] 교사 대시보드 (학생 관리 팝업/모달로 100% 호출) -->
+            <!-- [화면 5] 교사 대시보드 -->
             <section id="view-teacher-dashboard" class="view-screen hidden">
                 <div class="dashboard-container pixel-box">
                     <div class="dashboard-header">
@@ -359,13 +361,20 @@
                         </div>
                     </div>
 
+                    <!-- 8번 요구사항: 교사 커스텀 퀘스트 상세 안내 및 연동 반영 -->
                     <div id="dashtab-custom-quest" class="dashtab-panel hidden">
                         <div class="custom-quest-builder">
+                            <div class="teacher-guide-alert pixel-box" style="background:#1b2845; border-color:#06d6a0; margin-bottom: 15px;">
+                                <h4>💡 [선생님 전용 문제 출제 안내]</h4>
+                                <p style="font-size: 0.85rem; line-height: 1.4; color: #e2e0ed;">
+                                    선생님께서 우리 반 학생들을 위해 직접 작성하신 존댓말 문장은 <strong>'반말 몬스터 던전'</strong> 플레이 시 학생들에게 <strong>최우선 맞춤형 문제</strong>로 즉시 출제됩니다! 단원 평가나 우리 반 맞춤 지도 문장을 자유롭게 출제해 보세요.
+                                </p>
+                            </div>
                             <h3>✏️ 우리 반 맞춤형 존댓말 문제 추가</h3>
                             <form id="form-custom-quest">
                                 <div class="input-group">
                                     <label for="cq-title">문제 제목</label>
-                                    <input type="text" id="cq-title" placeholder="예: 단원평가 대비" required>
+                                    <input type="text" id="cq-title" placeholder="예: 단원평가 대비 1번" required>
                                 </div>
                                 <div class="input-group">
                                     <label for="cq-wrong">공격 반말 문장</label>
@@ -375,7 +384,7 @@
                                     <label for="cq-correct">정답 문장 (어절 마침표 포함)</label>
                                     <input type="text" id="cq-correct" placeholder="예: 선생님께서 진지를 잡수십니다." required>
                                 </div>
-                                <button type="submit" class="btn-pixel btn-success">➕ 커스텀 문제 저장</button>
+                                <button type="submit" class="btn-pixel btn-success">➕ 커스텀 문제 저장 및 반 반영</button>
                             </form>
                         </div>
                     </div>
@@ -384,7 +393,7 @@
 
         </main>
 
-        <!-- 신규 클래스 생성 모달 -->
+        <!-- 1번 요구사항: 실시간 중복 체크 텍스트 포함 신규 클래스 생성 모달 -->
         <div id="modal-teacher-create-class" class="modal-overlay hidden">
             <div class="modal-box pixel-box">
                 <h2>✨ 신규 클래스 생성</h2>
@@ -392,7 +401,8 @@
                 <form id="form-create-class-modal" onsubmit="if(window.handleTeacherCreateSubmit) window.handleTeacherCreateSubmit(event); return false;">
                     <div class="input-group">
                         <label for="new-class-code">🔢 희망 학급 코드 (숫자 6자리)</label>
-                        <input type="text" id="new-class-code" placeholder="예: 363636" maxlength="6" pattern="[0-9]*" inputmode="numeric" required autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <input type="text" id="new-class-code" placeholder="예: 363636" maxlength="6" pattern="[0-9]*" inputmode="numeric" required autocomplete="off" oninput="if(window.handleRealtimeCodeCheck) window.handleRealtimeCodeCheck(this);">
+                        <small id="code-duplicate-msg" style="font-size: 0.8rem; font-weight: bold; margin-top: 4px; display: block;"></small>
                     </div>
                     <div class="input-group-row">
                         <div class="input-group">
@@ -427,10 +437,24 @@
                         <input type="text" id="new-class-name" placeholder="예: 3학년 긍정열정반" required>
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button type="submit" class="btn-pixel btn-success btn-block btn-lg">✨ 클래스 생성 및 입장</button>
+                        <button id="btn-submit-create-class" type="submit" class="btn-pixel btn-success btn-block btn-lg">✨ 클래스 생성 및 입장</button>
                         <button type="button" class="btn-pixel btn-secondary" onclick="document.getElementById('modal-teacher-create-class').classList.add('hidden');">취소</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- 5번 요구사항: 배지 클릭 설명 상세 모달 -->
+        <div id="modal-badge-detail" class="modal-overlay hidden">
+            <div class="modal-box pixel-box">
+                <div id="bd-icon" class="big-badge-icon">🎖️</div>
+                <h2 id="bd-title">배지 이름</h2>
+                <hr class="pixel-hr">
+                <div id="bd-content" class="modal-result-body" style="text-align: left; background:#14112b; padding:12px; border-radius:6px;">
+                    <p id="bd-example" style="font-size: 1rem; color: var(--pixel-accent); margin-bottom: 8px;">예문: "..."</p>
+                    <p id="bd-desc" style="font-size: 0.85rem; color: #fff; line-height: 1.4;">설명</p>
+                </div>
+                <button id="btn-close-badge-detail" class="btn-pixel btn-primary" type="button" style="margin-top: 15px;">확인</button>
             </div>
         </div>
 
@@ -460,10 +484,11 @@
             </div>
         </div>
 
+        <!-- 9번 요구사항: 파이어베이스 DB 자동 동기화 반영되는 제작자 마스터 -->
         <div id="modal-creator-master" class="modal-overlay hidden">
             <div class="modal-box pixel-box modal-lg">
                 <h2>🛠️ 제작자 마스터 - 시나리오 & 프롬프트 템플릿 관리</h2>
-                <p>표준 교과과정에 맞춘 퀘스트 대화 시나리오 및 프롬프트를 입력/수정하면 DB에 실시간 반영됩니다.</p>
+                <p>표준 교과과정에 맞춘 퀘스트 대화 시나리오 및 프롬프트를 입력/수정하면 Firebase DB 및 로컬에 자동 반영됩니다.</p>
                 <hr class="pixel-hr">
                 <div class="creator-form-area">
                     <div class="input-group">
@@ -482,7 +507,7 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
-                    <button id="btn-save-creator-data" class="btn-pixel btn-success" type="button">💾 템플릿 DB 저장 및 반영</button>
+                    <button id="btn-save-creator-data" class="btn-pixel btn-success" type="button">💾 템플릿 DB 저장 및 실시간 반영</button>
                     <button id="btn-close-creator-modal" class="btn-pixel btn-secondary" type="button">닫기</button>
                 </div>
             </div>
@@ -505,7 +530,7 @@
 
         <div id="modal-survival-gameover" class="modal-overlay hidden">
             <div class="modal-box pixel-box modal-lg">
-                <h2>💔 바른말 수호대 탐험 종료!</h2>
+                <h2>💔 반말 몬스터 던전 탐험 완료!</h2>
                 <p>맞힌 문제 수: <strong id="so-correct-count">5</strong>개</p>
                 <hr class="pixel-hr">
                 <h3>📋 내가 틀렸던 문제 요약 오답 노트</h3>

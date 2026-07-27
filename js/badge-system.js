@@ -1,109 +1,82 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 50개 배지, 5개 월드 순차 해금 및 레틀/칭호 (badge-system.js)
+   🎮 [존댓말 차원 탐험대] 50개 배지 렌더링 & 상세 설명 팝업 (badge-system.js)
    ========================================================================== */
 
-import { BADGES, TITLES } from './data.js';
+import { BADGES } from './data.js';
 
-export function calculateTitle(earnedBadgeCount) {
-    let currentTitle = TITLES[0].title;
-    for (let t of TITLES) {
-        if (earnedBadgeCount >= t.minBadges) {
-            currentTitle = t.title;
-        }
-    }
-    return currentTitle;
+export function renderBadgeGrid(earnedBadgeIds = []) {
+    const grid = document.getElementById('badge-grid');
+    const countEl = document.getElementById('earned-badge-count');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    const earnedSet = new Set(earnedBadgeIds);
+    if (countEl) countEl.textContent = earnedSet.size;
+
+    BADGES.forEach((badge) => {
+        const isEarned = earnedSet.has(badge.id);
+        const item = document.createElement('div');
+        item.className = `badge-item-mini ${isEarned ? 'earned' : ''}`;
+        item.title = `${badge.name} (클릭 시 예문 보기)`;
+        item.innerHTML = `<span class="b-icon">${badge.icon}</span>`;
+        
+        // 5번 요구사항: 배지 클릭 시 존댓말 예문 및 설명 팝업 모달 노출!
+        item.onclick = () => {
+            openBadgeDetailModal(badge, isEarned);
+        };
+
+        grid.appendChild(item);
+    });
 }
 
-export function renderBadgeGrid(earnedBadgesArray = []) {
-    const badgeGrid = document.getElementById('badge-grid');
-    const badgeCountSpan = document.getElementById('earned-badge-count');
-    if (!badgeGrid) return;
+function openBadgeDetailModal(badge, isEarned) {
+    const modal = document.getElementById('modal-badge-detail');
+    if (!modal) return;
 
-    badgeGrid.innerHTML = '';
-    const earnedSet = new Set(earnedBadgesArray);
-    let count = 0;
+    document.getElementById('bd-icon').textContent = badge.icon;
+    document.getElementById('bd-title').textContent = `${badge.name} ${isEarned ? '🎖️ (획득 완료)' : '🔒 (미획득)'}`;
+    document.getElementById('bd-example').textContent = `💬 존댓말 예문: "${badge.description}"`;
+    document.getElementById('bd-desc').textContent = isEarned 
+        ? `✨ 해당 월드 탐험을 성공하여 이 배지를 획득하셨습니다!`
+        : `🔒 이 배지는 해당 세부 장소 탐험을 100점 만점으로 완료하면 해금됩니다.`;
 
-    Object.values(BADGES).forEach(b => {
-        const isEarned = earnedSet.has(b.id);
-        if (isEarned) count++;
+    modal.classList.remove('hidden');
 
-        const bDiv = document.createElement('div');
-        bDiv.className = `badge-item-mini ${isEarned ? 'earned' : ''}`;
-        bDiv.title = `${b.name}: ${b.desc}`;
-        bDiv.innerHTML = `<div class="b-icon">${isEarned ? b.icon : '🔒'}</div>`;
-        badgeGrid.appendChild(bDiv);
-    });
-
-    if (badgeCountSpan) {
-        badgeCountSpan.textContent = count;
+    const btnClose = document.getElementById('btn-close-badge-detail');
+    if (btnClose) {
+        btnClose.onclick = () => modal.classList.add('hidden');
     }
-
-    return calculateTitle(count);
 }
 
-// 3번: 각 월드당 10개 배지 수집 시 순차적 다음 월드 해금!
-export function updateWorldBadgeStatus(earnedBadgesArray = []) {
-    const earnedSet = new Set(earnedBadgesArray);
-
-    // 각 월드별 획득 배지 수 계산
-    const worldBadgeCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    earnedBadgesArray.forEach(badgeId => {
-        if (BADGES[badgeId]) {
-            const wId = BADGES[badgeId].worldId;
-            if (worldBadgeCounts[wId] !== undefined) {
-                worldBadgeCounts[wId]++;
-            }
-        }
-    });
+export function updateWorldBadgeStatus(earnedBadgeIds = []) {
+    const earnedSet = new Set(earnedBadgeIds);
 
     for (let w = 1; w <= 5; w++) {
-        const count = worldBadgeCounts[w];
-        const statusTag = document.getElementById(`wb-${w}`);
-        const cardEl = document.getElementById(`wcard-${w}`) || document.querySelector(`[data-world="${w}"]`);
+        const worldBadges = BADGES.filter(b => b.worldId === w);
+        const count = worldBadges.filter(b => earnedSet.has(b.id)).length;
+        
+        const wbEl = document.getElementById(`wb-${w}`);
+        if (wbEl) wbEl.textContent = `${count}/10`;
 
-        if (statusTag) {
-            statusTag.textContent = `${count}/10`;
-        }
+        const card = document.getElementById(`wcard-${w}`);
+        if (card && w > 1) {
+            const prevWorldBadges = BADGES.filter(b => b.worldId === w - 1);
+            const prevCount = prevWorldBadges.filter(b => earnedSet.has(b.id)).length;
 
-        // 월드 1은 기본 해금, 월드 2~5는 이전 월드 배지 10개 필요
-        let isUnlocked = false;
-        if (w === 1) isUnlocked = true;
-        else {
-            isUnlocked = (worldBadgeCounts[w - 1] >= 10);
-        }
-
-        if (cardEl) {
-            const enterBtn = cardEl.querySelector('.btn-enter-world');
-            if (isUnlocked) {
-                cardEl.classList.remove('locked');
-                if (enterBtn) {
-                    enterBtn.disabled = false;
-                    enterBtn.textContent = '입장하기 ➔';
-                }
+            if (prevCount >= 10 || count > 0) {
+                card.classList.remove('locked');
             } else {
-                cardEl.classList.add('locked');
-                if (enterBtn) {
-                    enterBtn.disabled = true;
-                    enterBtn.textContent = `🔒 월드 ${w-1} 배지 10개 필요`;
-                }
+                card.classList.add('locked');
             }
         }
     }
+}
 
-    // 9번: 차원 대통합 카드 (월드 5 카드 오른쪽 6번째) 50개 모았을 때 해금
-    const totalCount = Object.values(worldBadgeCounts).reduce((a, b) => a + b, 0);
-    const crossoverCard = document.getElementById('wcard-crossover');
-    const btnCrossover = document.getElementById('btn-start-crossover');
-
-    if (crossoverCard && btnCrossover) {
-        if (totalCount >= 50) {
-            crossoverCard.classList.remove('locked');
-            btnCrossover.disabled = false;
-            btnCrossover.textContent = '🌀 무한 탐험 입장!';
-        } else {
-            crossoverCard.classList.add('locked');
-            btnCrossover.disabled = true;
-            btnCrossover.textContent = `🔒 배지 50개 필요 (${totalCount}/50)`;
-        }
-    }
+export function calculateTitle(earnedCount) {
+    if (earnedCount >= 50) return "🌌 차원 대마법사 (Lv.MAX)";
+    if (earnedCount >= 40) return "🏫 예의범절 마스터 (Lv.5)";
+    if (earnedCount >= 30) return "🩺 미래 언어 의사 (Lv.4)";
+    if (earnedCount >= 20) return "🛡️ 동화 수호자 (Lv.3)";
+    if (earnedCount >= 10) return "🗡️ 바른말 수호기사 (Lv.2)";
+    return "🌱 새싹 탐험대 (Lv.1)";
 }
