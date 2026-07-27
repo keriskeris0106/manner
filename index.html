@@ -48,7 +48,7 @@
                         <p class="hero-subtitle">엉망이 된 차원의 존댓말을 구하고 바른말 수호자가 되어보세요!</p>
                     </div>
 
-                    <!-- 100% 클릭 보장 인라인 이벤트 적용 -->
+                    <!-- 100% 클릭 이벤트 보장 구조 -->
                     <div class="login-role-selector">
                         <div id="tab-student-login" class="role-card active" onclick="if(window.selectLoginRole) window.selectLoginRole('student');">
                             <div class="role-icon">🎒</div>
@@ -62,8 +62,8 @@
                         </div>
                     </div>
 
-                    <!-- 학생 로그인 폼 -->
-                    <form id="form-student-login" class="login-form-box" style="display: block;">
+                    <!-- 학생 로그인 폼 (onsubmit="return false;"로 페이지 리셋/새로고침 100% 차단) -->
+                    <form id="form-student-login" class="login-form-box" style="display: block;" onsubmit="if(window.handleStudentLoginSubmit) window.handleStudentLoginSubmit(event); return false;">
                         <div class="input-group">
                             <label for="student-class-code">🔑 학급 초대 코드</label>
                             <input type="text" id="student-class-code" placeholder="선생님이 발급한 클래스 코드 입력" maxlength="12" required autocomplete="off">
@@ -105,15 +105,15 @@
                         </button>
                     </form>
 
-                    <!-- 교사 로그인 & 가입 폼 -->
+                    <!-- 교사 로그인 폼 -->
                     <div id="box-teacher-login" class="login-form-box" style="display: none;">
                         <div class="teacher-auth-actions" style="margin-bottom: 15px;">
-                            <button id="btn-google-login" type="button" class="btn-pixel btn-google btn-block btn-lg">
+                            <button id="btn-google-login" type="button" class="btn-pixel btn-google btn-block btn-lg" onclick="if(window.handleGoogleLoginClick) window.handleGoogleLoginClick(event);">
                                 <i class="fab fa-google"></i> Google 계정으로 교사 로그인
                             </button>
                         </div>
                         
-                        <form id="form-teacher-register" class="teacher-register-box" style="display: none;">
+                        <form id="form-teacher-register" class="teacher-register-box" style="display: none;" onsubmit="if(window.handleTeacherRegisterSubmit) window.handleTeacherRegisterSubmit(event); return false;">
                             <hr class="pixel-hr">
                             <h3>📋 학급 정보 입력 (학급 코드 자동 생성)</h3>
                             <div class="input-group-row">
@@ -175,9 +175,9 @@
 
                     <div class="lobby-main-area">
                         <div class="mode-tabs">
-                            <button class="mode-tab active" data-tab="world-map">🗺️ 월드 퀘스트 (스토리)</button>
-                            <button class="mode-tab" data-tab="survival">🛡️ 바른말 수호대 (서바이벌)</button>
-                            <button class="mode-tab" data-tab="ai-notes">💡 AI 맞춤 오답노트</button>
+                            <button class="mode-tab active" data-tab="world-map" type="button">🗺️ 월드 퀘스트 (스토리)</button>
+                            <button class="mode-tab" data-tab="survival" type="button">🛡️ 바른말 수호대 (서바이벌)</button>
+                            <button class="mode-tab" data-tab="ai-notes" type="button">💡 AI 맞춤 오답노트</button>
                         </div>
 
                         <div id="tab-content-world-map" class="tab-panel active">
