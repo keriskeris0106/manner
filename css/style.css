@@ -1,0 +1,923 @@
+/* ==========================================================================
+   🎮 [존댓말 차원 탐험대] 2D 픽셀 아트 레트로 디자인 시스템 & CSS Style
+   ========================================================================== */
+
+:root {
+    --bg-dark: #121026;
+    --bg-card: #1c183b;
+    --bg-card-border: #4e4376;
+    --pixel-primary: #5d54a4;
+    --pixel-primary-hover: #473e85;
+    --pixel-accent: #ffd166;
+    --pixel-success: #06d6a0;
+    --pixel-danger: #ef476f;
+    --pixel-warning: #ff9f1c;
+    --pixel-info: #118ab2;
+
+    --text-main: #ffffff;
+    --text-muted: #b0a8b9;
+
+    --font-pixel: 'DungGeunMo', 'SUIT', sans-serif;
+    --font-body: 'SUIT', 'DungGeunMo', sans-serif;
+
+    --pixel-shadow: 4px 4px 0px #000000;
+    --pixel-box-border: 4px solid #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body.pixel-theme {
+    background-color: var(--bg-dark);
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(93, 84, 164, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(6, 214, 160, 0.15) 0%, transparent 40%);
+    color: var(--text-main);
+    font-family: var(--font-body);
+    height: 100vh;
+    overflow: hidden; /* 크롬북 가로모드 최적화 */
+}
+
+/* App Container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+/* Utility Hidden */
+.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   1. GNB (상단 바 - 줄바꿈 방지 및 콤팩트 버튼)
+   ========================================================================== */
+.gnb-bar {
+    height: 60px;
+    background: #171333;
+    border-bottom: 3px solid #3d356b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+    flex-shrink: 0;
+}
+
+.gnb-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap; /* 줄바꿈 절대 발생 안함 */
+}
+
+.gnb-title {
+    font-family: var(--font-pixel);
+    font-size: 1.4rem;
+    color: var(--pixel-accent);
+    text-shadow: 2px 2px 0 #000;
+}
+
+.user-badge-tag {
+    background: #3d356b;
+    color: #06d6a0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: var(--font-pixel);
+    border: 1px solid #5d54a4;
+}
+
+.gnb-center {
+    display: flex;
+    align-items: center;
+}
+
+.user-pill-info {
+    background: #25204c;
+    border: 2px solid #5d54a4;
+    padding: 6px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.user-title-badge {
+    background: var(--pixel-accent);
+    color: #000;
+    font-family: var(--font-pixel);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+.gnb-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ==========================================================================
+   2. Pixel UI Controls (Buttons, Inputs, Boxes)
+   ========================================================================== */
+.pixel-box {
+    background: var(--bg-card);
+    border: 3px solid var(--bg-card-border);
+    box-shadow: var(--pixel-shadow);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.btn-pixel {
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    padding: 10px 18px;
+    border: 2px solid #000;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 #000;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+}
+
+.btn-pixel:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #000;
+}
+
+.btn-primary { background: var(--pixel-primary); }
+.btn-primary:hover { background: var(--pixel-primary-hover); }
+.btn-success { background: var(--pixel-success); color: #000; }
+.btn-danger { background: var(--pixel-danger); }
+.btn-warning { background: var(--pixel-warning); color: #000; }
+.btn-google { background: #ea4335; }
+
+.btn-compact {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+.btn-lg { padding: 14px 24px; font-size: 1.2rem; }
+.btn-block { width: 100%; display: flex; }
+
+.pixel-hr {
+    border: 0;
+    height: 2px;
+    background: var(--bg-card-border);
+    margin: 15px 0;
+}
+
+/* Input Fields */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.input-group label {
+    font-family: var(--font-pixel);
+    font-size: 0.9rem;
+    color: var(--pixel-accent);
+}
+
+.input-group input, .input-group select {
+    background: #100d24;
+    border: 2px solid #3d356b;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    outline: none;
+}
+
+.input-group input:focus, .input-group select:focus {
+    border-color: var(--pixel-accent);
+}
+
+.input-group-row {
+    display: flex;
+    gap: 12px;
+}
+.input-group-row .input-group { flex: 1; }
+
+/* Main Content Router */
+.main-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.view-screen {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ==========================================================================
+   3. [화면 1] 로그인 & 역할 선택
+   ========================================================================== */
+#view-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-hero-box {
+    width: 600px;
+    max-width: 90vw;
+    text-align: center;
+}
+
+.hero-header {
+    margin-bottom: 20px;
+}
+
+.pixel-portal-anim {
+    font-size: 3rem;
+    animation: rotatePortal 6s linear infinite;
+    display: inline-block;
+}
+
+@keyframes rotatePortal {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.hero-title {
+    font-family: var(--font-pixel);
+    font-size: 2.2rem;
+    color: var(--pixel-accent);
+    margin: 10px 0 6px 0;
+}
+
+.hero-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* 3단계: 역할 선택 카드 */
+.login-role-selector {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.role-card {
+    flex: 1;
+    background: #25204c;
+    border: 2px solid #3d356b;
+    border-radius: 8px;
+    padding: 16px 10px;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.2s;
+}
+
+.role-card.active {
+    background: #362e6e;
+    border-color: var(--pixel-accent);
+    box-shadow: 0 0 10px rgba(255, 209, 102, 0.4);
+}
+
+.role-icon { font-size: 2rem; margin-bottom: 6px; }
+.role-card h2 { font-family: var(--font-pixel); font-size: 1.1rem; margin-bottom: 4px; }
+.role-card p { font-size: 0.8rem; color: var(--text-muted); }
+
+.login-form-box {
+    text-align: left;
+}
+
+.pending-notice-box {
+    background: #382c16;
+    border: 2px dashed var(--pixel-warning);
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+/* ==========================================================================
+   4. [화면 2] 로비 레이아웃 & 5개 월드 차원 지도
+   ========================================================================== */
+.lobby-layout {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+}
+
+.lobby-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-card {
+    text-align: center;
+}
+
+.avatar-box {
+    font-size: 3rem;
+    background: #2b2554;
+    width: 80px; height: 80px;
+    line-height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 10px auto;
+    border: 3px solid var(--pixel-accent);
+}
+
+.title-badge-large {
+    margin-top: 10px;
+    background: var(--pixel-accent);
+    color: #000;
+    font-family: var(--font-pixel);
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.badge-collection-box {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.badge-collection-box h3 {
+    font-family: var(--font-pixel);
+    font-size: 0.95rem;
+    color: var(--pixel-accent);
+    margin-bottom: 10px;
+}
+
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.badge-item {
+    background: #14112b;
+    border: 2px solid #3d356b;
+    border-radius: 6px;
+    padding: 8px 4px;
+    text-align: center;
+    opacity: 0.4;
+    transition: all 0.2s;
+}
+
+.badge-item.earned {
+    opacity: 1;
+    border-color: var(--pixel-accent);
+    background: #2b2554;
+}
+
+.badge-item .b-icon { font-size: 1.8rem; }
+.badge-item .b-name { font-size: 0.75rem; font-family: var(--font-pixel); margin-top: 4px; display: block; }
+
+/* Lobby Main */
+.lobby-main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.mode-tab {
+    background: #201b42;
+    border: 2px solid #3d356b;
+    color: var(--text-muted);
+    font-family: var(--font-pixel);
+    padding: 10px 16px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+}
+
+.mode-tab.active {
+    background: var(--bg-card);
+    border-color: var(--bg-card-border);
+    border-bottom: 2px solid var(--bg-card);
+    color: var(--pixel-accent);
+}
+
+.tab-panel {
+    flex: 1;
+    background: var(--bg-card);
+    border: 3px solid var(--bg-card-border);
+    border-radius: 0 8px 8px 8px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.world-map-header h2 {
+    font-family: var(--font-pixel);
+    font-size: 1.2rem;
+    color: var(--pixel-accent);
+    margin-bottom: 16px;
+}
+
+/* 5개 월드 카드 그리드 */
+.world-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.world-card {
+    background: #26204d;
+    border: 2px solid #433980;
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.world-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--pixel-accent);
+}
+
+.world-badge-status {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-size: 0.75rem;
+    font-family: var(--font-pixel);
+    background: #14112b;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+.world-badge-status.mastered {
+    background: var(--pixel-accent);
+    color: #000;
+}
+
+.world-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.world-card h3 { font-family: var(--font-pixel); font-size: 1.1rem; margin-bottom: 6px; color: #fff; }
+.world-card .world-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; height: 36px; }
+
+.sub-locations {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.sub-locations span {
+    background: #1a1636;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #06d6a0;
+}
+
+/* ==========================================================================
+   5. [화면 3] 월드 퀘스트 5턴 대화 메신저 UI (카카오톡 형태)
+   ========================================================================== */
+.quest-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.quest-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--bg-card-border);
+}
+
+.quest-title-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.quest-title-info h2 {
+    font-family: var(--font-pixel);
+    font-size: 1.2rem;
+    color: var(--pixel-accent);
+}
+
+.turn-counter {
+    background: var(--pixel-primary);
+    font-family: var(--font-pixel);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.quest-score-info {
+    font-family: var(--font-pixel);
+    font-size: 1.1rem;
+    color: var(--pixel-success);
+}
+
+/* 메신저 대화창 */
+.messenger-chat-body {
+    flex: 1;
+    background: #100c24;
+    border: 2px solid #2f2959;
+    border-radius: 8px;
+    margin: 12px 0;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.chat-bubble-wrapper {
+    display: flex;
+    gap: 12px;
+    max-width: 80%;
+}
+
+.chat-bubble-wrapper.npc {
+    align-self: flex-start;
+}
+
+.chat-bubble-wrapper.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.chat-avatar {
+    width: 44px; height: 44px;
+    background: #2e285c;
+    border: 2px solid var(--pixel-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.chat-content-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-sender-name {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.chat-bubble {
+    background: #25204c;
+    border: 2px solid #433980;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.chat-bubble-wrapper.user .chat-bubble {
+    background: #5d54a4;
+    border-color: #8378c7;
+}
+
+.feedback-bubble {
+    font-size: 0.85rem;
+    margin-top: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+.feedback-bubble.correct { background: #064032; color: #06d6a0; }
+.feedback-bubble.wrong { background: #4a1523; color: #ef476f; }
+
+/* 선택지 버튼 하단 영역 */
+.quest-controls-footer {
+    background: #191536;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid #362f6b;
+}
+
+.control-prompt {
+    font-family: var(--font-pixel);
+    font-size: 0.9rem;
+    color: var(--pixel-accent);
+    margin-bottom: 8px;
+}
+
+.quest-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.btn-option {
+    background: #292357;
+    border: 2px solid #4d438c;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.btn-option:hover {
+    background: #3e3678;
+    border-color: var(--pixel-accent);
+}
+
+/* ==========================================================================
+   6. [화면 4] 바른말 수호대 서바이벌 (어절 블록 조립)
+   ========================================================================== */
+.survival-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.survival-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-pixel);
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+}
+
+.hearts-display { color: var(--pixel-danger); }
+.timer-display { color: var(--pixel-warning); }
+.score-display { color: var(--pixel-success); }
+
+.boss-attack-area {
+    background: #38121f;
+    border: 2px solid var(--pixel-danger);
+    padding: 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 14px;
+}
+
+.boss-avatar { font-size: 3rem; }
+.boss-tag { font-family: var(--font-pixel); font-size: 0.8rem; color: var(--pixel-danger); }
+.boss-speech-bubble h2 { font-family: var(--font-pixel); font-size: 1.4rem; color: #fff; }
+
+.sentence-assemble-zone {
+    background: #14102e;
+    border: 2px dashed #4e4376;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 14px;
+    flex: 1;
+}
+
+.zone-label { font-family: var(--font-pixel); font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; }
+
+.assembled-slots {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-height: 50px;
+}
+
+.word-block {
+    background: #5d54a4;
+    border: 2px solid #8378c7;
+    color: #fff;
+    font-family: var(--font-pixel);
+    font-size: 1.1rem;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #000;
+    transition: transform 0.1s;
+}
+
+.word-block:active { transform: scale(0.95); }
+
+.word-blocks-pool {
+    background: #1a1638;
+    border: 2px solid #3d356b;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.blocks-container {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    min-height: 44px;
+}
+
+.block-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ==========================================================================
+   7. [화면 5 & 6] 교사 대시보드 & 최종 관리자 & 모달
+   ========================================================================== */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.invite-code-pill {
+    background: #25204c;
+    border: 2px solid var(--pixel-accent);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: var(--font-pixel);
+}
+
+.dash-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.dash-tab {
+    background: #201b42;
+    border: 2px solid #3d356b;
+    color: var(--text-muted);
+    font-family: var(--font-pixel);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.dash-tab.active {
+    background: var(--pixel-primary);
+    color: #fff;
+}
+
+.dashtab-panel { display: none; }
+.dashtab-panel.active { display: block; }
+
+.dashboard-grid {
+    display: flex;
+    gap: 20px;
+}
+
+.student-list-box {
+    width: 260px;
+    background: #14112b;
+    border: 2px solid #3d356b;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.student-ul-list {
+    list-style: none;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.student-ul-list li {
+    background: #201a42;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.student-ul-list li.active {
+    background: var(--pixel-primary);
+    border: 1px solid var(--pixel-accent);
+}
+
+.student-detail-box {
+    flex: 1;
+    background: #14112b;
+    border: 2px solid #3d356b;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.error-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.error-card {
+    background: #251e4d;
+    border: 1px solid #433980;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.error-card h4 { font-size: 0.8rem; color: var(--text-muted); }
+.err-count { font-family: var(--font-pixel); font-size: 1.4rem; color: var(--pixel-danger); }
+
+.logs-recreation-box {
+    background: #0d0a1c;
+    border: 1px solid #2e265c;
+    border-radius: 6px;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+/* Pixel Tables */
+.pixel-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.pixel-table th, .pixel-table td {
+    border: 1px solid #3d356b;
+    padding: 10px;
+    text-align: center;
+}
+
+.pixel-table th {
+    background: #25204c;
+    font-family: var(--font-pixel);
+    color: var(--pixel-accent);
+}
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    width: 460px;
+    max-width: 90vw;
+    text-align: center;
+}
+.modal-lg { width: 650px; }
+
+.big-badge-icon { font-size: 4rem; margin-bottom: 6px; }
+
+/* ==========================================================================
+   8. 🖨️ 인쇄 (PDF 변환) 최적화 CSS
+   ========================================================================== */
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        overflow: visible !important;
+    }
+    .gnb-bar, .modal-overlay, .btn-pixel, .dash-tabs, .student-list-box {
+        display: none !important;
+    }
+    .app-container, .main-content, .view-screen, .dashboard-container {
+        height: auto !important;
+        width: 100% !important;
+        overflow: visible !important;
+        position: static !important;
+        background: #fff !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #000 !important;
+    }
+    .student-detail-box {
+        border: 2px solid #000 !important;
+        color: #000 !important;
+        background: #fff !important;
+    }
+    .err-count { color: #d90429 !important; }
+}

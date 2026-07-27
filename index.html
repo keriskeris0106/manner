@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 존댓말 차원 탐험대 - 초등 3학년 국어 게이미피케이션</title>
+    <!-- 한글 픽셀 폰트 DungGeunMo & Noto Sans KR -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+    <link href="https://fonts.googleapis.com/css2?family=DungGeunMo&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+    <!-- FontAwesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pixel-theme">
+
+    <!-- App Container -->
+    <div id="app" class="app-container">
+
+        <!-- 1. 상단 바 (GNB): 크롬북 최적화 (제목 한 줄 고정, 콤팩트 종료 버튼) -->
+        <header id="gnb" class="gnb-bar hidden">
+            <div class="gnb-left">
+                <span class="pixel-icon">🌌</span>
+                <h1 class="gnb-title">존댓말 차원 탐험대</h1>
+                <span id="user-badge-tag" class="user-badge-tag">LV.1 탐험가</span>
+            </div>
+            <div class="gnb-center">
+                <div id="current-user-info" class="user-pill-info">
+                    <span id="user-display-name">홍길동 (3학년 1반)</span>
+                    <span id="user-title-display" class="user-title-badge">새싹 탐험대</span>
+                </div>
+            </div>
+            <div class="gnb-right">
+                <button id="btn-sound-toggle" class="btn-pixel btn-icon" title="음악 켜기/끄기">🎵</button>
+                <button id="btn-logout" class="btn-pixel btn-danger btn-compact">게임 종료 ✖</button>
+            </div>
+        </header>
+
+        <!-- 2. 메인 화면 / 라우터 컨테이너 -->
+        <main id="main-content" class="main-content">
+
+            <!-- [화면 1] 로그인 & 8단계 인증 선택 화면 -->
+            <section id="view-login" class="view-screen active">
+                <div class="login-hero-box pixel-box">
+                    <div class="hero-header">
+                        <div class="pixel-portal-anim">🌀</div>
+                        <h1 class="hero-title">존댓말 차원 탐험대</h1>
+                        <p class="hero-subtitle">엉망이 된 차원의 존댓말을 구하고 바른말 수호자가 되어보세요!</p>
+                    </div>
+
+                    <!-- 3단계: 학생/교사 선택 네모 박스 -->
+                    <div class="login-role-selector">
+                        <button id="tab-student-login" class="role-card active">
+                            <div class="role-icon">🎒</div>
+                            <h2>학생 탐험대 로그인</h2>
+                            <p>선생님이 주신 클래스 코드로 입장!</p>
+                        </button>
+                        <button id="tab-teacher-login" class="role-card">
+                            <div class="role-icon">👩‍🏫</div>
+                            <h2>교사 / 관리자 접속</h2>
+                            <p>구글 로그인 및 학습 대시보드</p>
+                        </button>
+                    </div>
+
+                    <!-- 학생 로그인 폼 -->
+                    <form id="form-student-login" class="login-form-box">
+                        <div class="input-group">
+                            <label for="student-class-code">🔑 클래스 코드 (6자리)</label>
+                            <input type="text" id="student-class-code" placeholder="예: EXP123" maxlength="8" required autocomplete="off">
+                        </div>
+                        <div class="input-group-row">
+                            <div class="input-group">
+                                <label for="student-grade">🎓 학년</label>
+                                <select id="student-grade" required>
+                                    <option value="3">3학년</option>
+                                    <option value="1">1학년</option>
+                                    <option value="2">2학년</option>
+                                    <option value="4">4학년</option>
+                                    <option value="5">5학년</option>
+                                    <option value="6">6학년</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="student-class-num">🏫 반</label>
+                                <select id="student-class-num" required>
+                                    <option value="1">1반</option>
+                                    <option value="2">2반</option>
+                                    <option value="3">3반</option>
+                                    <option value="4">4반</option>
+                                    <option value="5">5반</option>
+                                    <option value="6">6반</option>
+                                    <option value="7">7반</option>
+                                    <option value="8">8반</option>
+                                    <option value="9">9반</option>
+                                    <option value="10">10반</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="student-name">👤 이름 (실명을 입력하세요)</label>
+                            <input type="text" id="student-name" placeholder="예: 홍길동 (닉네임 금지)" required autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn-pixel btn-primary btn-block btn-lg">
+                            ⚔️ 탐험 시작하기!
+                        </button>
+                    </form>
+
+                    <!-- 교사 로그인 & 가입 폼 -->
+                    <div id="box-teacher-login" class="login-form-box hidden">
+                        <div class="teacher-auth-actions">
+                            <button id="btn-google-login" class="btn-pixel btn-google btn-block btn-lg">
+                                <i class="fab fa-google"></i> Google 계정으로 로그인 / 가입
+                            </button>
+                        </div>
+                        
+                        <!-- 교사 신규 가입 신청 폼 (승인 대기용) -->
+                        <form id="form-teacher-register" class="teacher-register-box hidden">
+                            <hr class="pixel-hr">
+                            <h3>📋 교사 회원가입 신청 (관리자 승인 필요)</h3>
+                            <div class="input-group">
+                                <label for="teacher-school">🏫 학교명</label>
+                                <input type="text" id="teacher-school" placeholder="예: 한국초등학교" required>
+                            </div>
+                            <div class="input-group-row">
+                                <div class="input-group">
+                                    <label for="teacher-grade">🎓 학년</label>
+                                    <select id="teacher-grade" required>
+                                        <option value="3">3학년</option>
+                                        <option value="1">1학년</option>
+                                        <option value="2">2학년</option>
+                                        <option value="4">4학년</option>
+                                        <option value="5">5학년</option>
+                                        <option value="6">6학년</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="teacher-class-num">🏫 반</label>
+                                    <select id="teacher-class-num" required>
+                                        <option value="1">1반</option>
+                                        <option value="2">2반</option>
+                                        <option value="3">3반</option>
+                                        <option value="4">4반</option>
+                                        <option value="5">5반</option>
+                                        <option value="6">6반</option>
+                                        <option value="7">7반</option>
+                                        <option value="8">8반</option>
+                                        <option value="9">9반</option>
+                                        <option value="10">10반</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="teacher-class-name">🏷️ 클래스 이름</label>
+                                <input type="text" id="teacher-class-name" placeholder="예: 3학년 1반 존댓말 수호대" required>
+                            </div>
+                            <button type="submit" class="btn-pixel btn-success btn-block">
+                                📩 승인 신청하기
+                            </button>
+                        </form>
+
+                        <div id="teacher-pending-notice" class="pending-notice-box hidden">
+                            <p>⏳ <strong>관리자 승인 대기 중입니다.</strong></p>
+                            <p class="notice-desc">최종 관리자가 가입을 승인하면 학반 관리자 대시보드를 사용할 수 있습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- [화면 2] 로비 (차원 탐험 지도 및 메뉴) -->
+            <section id="view-lobby" class="view-screen hidden">
+                <div class="lobby-layout">
+                    <!-- 좌측: 프로필 및 배지/칭호 도감 -->
+                    <aside class="lobby-sidebar pixel-box">
+                        <div class="profile-card">
+                            <div class="avatar-box">🧙‍♂️</div>
+                            <h2 id="lobby-user-name">홍길동</h2>
+                            <p id="lobby-user-class">3학년 1반 (클래스: 탐험대)</p>
+                            <div class="title-badge-large" id="lobby-user-title">🏆 새싹 탐험대</div>
+                        </div>
+
+                        <hr class="pixel-hr">
+
+                        <!-- 배지 및 칭호 도감 -->
+                        <div class="badge-collection-box">
+                            <h3>🎖️ 수집한 배지 (<span id="earned-badge-count">0</span>/10)</h3>
+                            <div id="badge-grid" class="badge-grid">
+                                <!-- JS로 렌더링 (진지 배지, 연세 배지, 마스터 배지 등) -->
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- 우측: 모드 선택 & 5개 월드 차원 지도 -->
+                    <div class="lobby-main-area">
+                        <!-- 모드 탭 -->
+                        <div class="mode-tabs">
+                            <button class="mode-tab active" data-tab="world-map">🗺️ 월드 퀘스트 (스토리)</button>
+                            <button class="mode-tab" data-tab="survival">🛡️ 바른말 수호대 (서바이벌)</button>
+                            <button class="mode-tab" data-tab="leaderboard">🏆 명예의 전당 (랭킹)</button>
+                            <button class="mode-tab lock-crossover" id="tab-crossover" data-tab="crossover" title="5개 마스터 배지 획득 시 해금">🌌 차원 대통합 (🔒)</button>
+                        </div>
+
+                        <!-- 탭 1: 5개 월드 차원 지도 -->
+                        <div id="tab-content-world-map" class="tab-panel active">
+                            <div class="world-map-header">
+                                <h2>🌌 차원 포털 지도를 선택하여 퀘스트를 시작하세요!</h2>
+                            </div>
+                            <div class="world-card-grid">
+                                <!-- 월드 1: 우리 마을 -->
+                                <div class="world-card" data-world="1">
+                                    <div class="world-badge-status" id="wb-1">미획득</div>
+                                    <div class="world-icon">🛒</div>
+                                    <h3>월드 1: 시끌벅적 우리 마을</h3>
+                                    <p class="world-desc">상대 높임법 (해요체/합쇼체)</p>
+                                    <div class="sub-locations">
+                                        <span>마트</span><span>병원</span><span>식당</span><span>약국</span>
+                                    </div>
+                                    <button class="btn-pixel btn-primary btn-sm">입장하기 ➔</button>
+                                </div>
+
+                                <!-- 월드 2: 동화 월드 -->
+                                <div class="world-card" data-world="2">
+                                    <div class="world-badge-status" id="wb-2">미획득</div>
+                                    <div class="world-icon">🏰</div>
+                                    <h3>월드 2: 신비한 동화 월드</h3>
+                                    <p class="world-desc">전래동화/명작 속 존댓말 바로잡기</p>
+                                    <div class="sub-locations">
+                                        <span>용궁</span><span>흥부네</span><span>과자집</span>
+                                    </div>
+                                    <button class="btn-pixel btn-primary btn-sm">입장하기 ➔</button>
+                                </div>
+
+                                <!-- 월드 3: 미래 병원 -->
+                                <div class="world-card" data-world="3">
+                                    <div class="world-badge-status" id="wb-3">미획득</div>
+                                    <div class="world-icon">🏥</div>
+                                    <h3>월드 3: 삐뽀삐뽀 미래 병원</h3>
+                                    <p class="world-desc">사물 높임 오류 교정 ("주사 맞으실게요 X")</p>
+                                    <div class="sub-locations">
+                                        <span>진료실</span><span>주사실</span><span>약국</span>
+                                    </div>
+                                    <button class="btn-pixel btn-primary btn-sm">입장하기 ➔</button>
+                                </div>
+
+                                <!-- 월드 4: 거꾸로 초등학교 -->
+                                <div class="world-card" data-world="4">
+                                    <div class="world-badge-status" id="wb-4">미획득</div>
+                                    <div class="world-icon">🏫</div>
+                                    <h3>월드 4: 거꾸로 초등학교</h3>
+                                    <p class="world-desc">압존법 이해 및 윗사람 높임법</p>
+                                    <div class="sub-locations">
+                                        <span>교장실</span><span>교무실</span><span>교실</span>
+                                    </div>
+                                    <button class="btn-pixel btn-primary btn-sm">입장하기 ➔</button>
+                                </div>
+
+                                <!-- 월드 5: 조선시대 타임슬립 -->
+                                <div class="world-card" data-world="5">
+                                    <div class="world-badge-status" id="wb-5">미획득</div>
+                                    <div class="world-icon">👑</div>
+                                    <h3>월드 5: 조선시대 타임슬립</h3>
+                                    <p class="world-desc">특수 어휘 (진지, 연세, 성함, 주무시다)</p>
+                                    <div class="sub-locations">
+                                        <span>경복궁</span><span>동헌</span><span>저잣거리</span>
+                                    </div>
+                                    <button class="btn-pixel btn-primary btn-sm">입장하기 ➔</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 탭 2: 바른말 수호대 서바이벌 준비 -->
+                        <div id="tab-content-survival" class="tab-panel hidden">
+                            <div class="survival-intro-box pixel-box">
+                                <h2>🛡️ 바른말 수호대 (서바이벌 랭킹전)</h2>
+                                <p>반말 몬스터의 공격에 맞서 올바른 어절 블록을 순서대로 조합하세요!</p>
+                                <div class="rules-list">
+                                    <div class="rule-item">❤️ <strong>목숨 3개</strong>: 틀린 문장을 조립하면 하트 1개가 감점됩니다.</div>
+                                    <div class="rule-item">⏱️ <strong>제한시간 5분</strong>: 5분 동안 얼마나 많은 문제를 연속해서 맞히는지 도전하세요!</div>
+                                    <div class="rule-item">📋 <strong>오답 요약 팝업</strong>: 하트가 다 소진되면 틀렸던 문제들을 정리해 드립니다.</div>
+                                </div>
+                                <button id="btn-start-survival" class="btn-pixel btn-warning btn-lg">
+                                    ⚔️ 서바이벌 도전 시작!
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 탭 3: 명예의 전당 (리더보드) -->
+                        <div id="tab-content-leaderboard" class="tab-panel hidden">
+                            <div class="leaderboard-box pixel-box">
+                                <h2>🏆 명예의 전당 (바른말 수호대 랭킹)</h2>
+                                <table class="pixel-table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>이름 (클래스)</th>
+                                            <th>맞힌 문제 수</th>
+                                            <th>달성 칭호</th>
+                                            <th>날짜</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboard-tbody">
+                                        <!-- JS로 렌더링 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 탭 4: 차원 대통합 모드 -->
+                        <div id="tab-content-crossover" class="tab-panel hidden">
+                            <div class="crossover-box pixel-box">
+                                <h2>🌌 차원 대통합 무한 모드</h2>
+                                <p>5개 월드의 마스터 배지를 모두 모은 최고 탐험가만 입장할 수 있는 시공간 믹스 모드입니다!</p>
+                                <button id="btn-start-crossover" class="btn-pixel btn-success btn-lg">
+                                    🌀 무한 차원 탐험 시작!
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- [화면 3] 월드 퀘스트 플레이 (5턴 대화 메신저 UI) -->
+            <section id="view-quest" class="view-screen hidden">
+                <div class="quest-container pixel-box">
+                    <!-- 퀘스트 상단 정보 -->
+                    <div class="quest-header">
+                        <button id="btn-exit-quest" class="btn-pixel btn-sm">⬅️ 월드 지도로</button>
+                        <div class="quest-title-info">
+                            <h2 id="quest-location-name">월드 1: 시끌벅적 우리 마을 - [마트]</h2>
+                            <span id="quest-turn-counter" class="turn-counter">TURN 1 / 5</span>
+                        </div>
+                        <div class="quest-score-info">
+                            점수: <span id="quest-current-score">100</span>점
+                        </div>
+                    </div>
+
+                    <!-- 중앙: 카카오톡 스타일 메신저 대화창 -->
+                    <div id="messenger-chat-body" class="messenger-chat-body">
+                        <!-- 대화 말풍선이 렌더링되는 곳 -->
+                    </div>
+
+                    <!-- 하단 조작부: 선택지 버튼 영역 -->
+                    <div class="quest-controls-footer">
+                        <p class="control-prompt">💡 올바른 존댓말 표현을 선택하세요!</p>
+                        <div id="quest-options-container" class="quest-options-grid">
+                            <!-- 선택지 버튼 3개 렌더링 -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- [화면 4] 바른말 수호대 플레이 (어절 블록 서바이벌) -->
+            <section id="view-survival" class="view-screen hidden">
+                <div class="survival-container pixel-box">
+                    <div class="survival-header">
+                        <div class="hearts-display">
+                            하트: <span id="survival-hearts">❤️❤️❤️</span>
+                        </div>
+                        <div class="timer-display">
+                            ⏱️ 남은 시간: <span id="survival-timer">05:00</span>
+                        </div>
+                        <div class="score-display">
+                            맞힌 문제: <span id="survival-score-count">0</span>개
+                        </div>
+                    </div>
+
+                    <!-- 보스 몬스터 대사 공격 영역 -->
+                    <div class="boss-attack-area">
+                        <div class="boss-avatar">👾</div>
+                        <div class="boss-speech-bubble">
+                            <span class="boss-tag">반말 몬스터의 공격!</span>
+                            <h2 id="boss-attack-text">"할아버지 밥 먹어!"</h2>
+                        </div>
+                    </div>
+
+                    <!-- 학생이 조립 중인 문장 완성 슬롯 -->
+                    <div class="sentence-assemble-zone">
+                        <p class="zone-label">📌 어절 블록을 클릭하여 문장을 바르게 완성하세요:</p>
+                        <div id="assembled-slots" class="assembled-slots">
+                            <!-- 조립된 블록들 -->
+                        </div>
+                    </div>
+
+                    <!-- 하단: 흩어진 어절 블록 드래그/클릭 영역 -->
+                    <div class="word-blocks-pool">
+                        <div id="blocks-container" class="blocks-container">
+                            <!-- [할아버지께서], [진지를], [잡수세요] 등의 블록 -->
+                        </div>
+                        <div class="block-actions">
+                            <button id="btn-reset-blocks" class="btn-pixel btn-sm">🔄 블록 다시 배치</button>
+                            <button id="btn-submit-sentence" class="btn-pixel btn-success btn-lg">✨ 문장 완성 제출!</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- [화면 5] 교사 관리자 대시보드 (학습 이력, 초대코드, 리포트 출력, 커스텀 퀘스트) -->
+            <section id="view-teacher-dashboard" class="view-screen hidden">
+                <div class="dashboard-container pixel-box">
+                    <div class="dashboard-header">
+                        <h2>👩‍🏫 교사 관리자 대시보드 - <span id="dash-class-title">3학년 1반</span></h2>
+                        <div class="dashboard-top-actions">
+                            <span id="dash-invite-code" class="invite-code-pill">클래스 초대코드: <strong>EXP123</strong></span>
+                            <button id="btn-print-report" class="btn-pixel btn-primary">🖨️ 학급 진단 리포트 인쇄/PDF</button>
+                        </div>
+                    </div>
+
+                    <!-- 대시보드 탭 -->
+                    <div class="dash-tabs">
+                        <button class="dash-tab active" data-dashtab="students">👥 학생 학습 이력</button>
+                        <button class="dash-tab" data-dashtab="custom-quest">✏️ 커스텀 퀘스트 작성</button>
+                    </div>
+
+                    <!-- 탭 1: 학생 이력 및 상세 분석 -->
+                    <div id="dashtab-students" class="dashtab-panel active">
+                        <div class="dashboard-grid">
+                            <!-- 좌측: 학생 목록 -->
+                            <div class="student-list-box">
+                                <h3>학생 목록 (총 <span id="dash-student-count">0</span>명)</h3>
+                                <ul id="student-ul-list" class="student-ul-list">
+                                    <!-- JS 렌더링 -->
+                                </ul>
+                            </div>
+
+                            <!-- 우측: 선택된 학생 세부 오류 진단 및 로그 -->
+                            <div class="student-detail-box">
+                                <h3 id="detail-student-name">학생을 선택해 주세요</h3>
+                                <div id="student-analysis-content" class="analysis-content hidden">
+                                    <div class="error-summary-cards">
+                                        <div class="error-card">
+                                            <h4>🍵 사물 높임 오류</h4>
+                                            <span id="err-object" class="err-count">0회</span>
+                                        </div>
+                                        <div class="error-card">
+                                            <h4>👵 압존법 오류</h4>
+                                            <span id="err-apjon" class="err-count">0회</span>
+                                        </div>
+                                        <div class="error-card">
+                                            <h4>🍱 특수 어휘 부족</h4>
+                                            <span id="err-special" class="err-count">0회</span>
+                                        </div>
+                                        <div class="error-card">
+                                            <h4>👑 주체/객체 높임</h4>
+                                            <span id="err-subject" class="err-count">0회</span>
+                                        </div>
+                                    </div>
+
+                                    <h4>📜 선택 오답 로그 재현</h4>
+                                    <div id="student-logs-recreation" class="logs-recreation-box">
+                                        <!-- 오답 선택지 및 하트 차감 로그 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 탭 2: 교사 커스텀 퀘스트 등록 -->
+                    <div id="dashtab-custom-quest" class="dashtab-panel hidden">
+                        <div class="custom-quest-builder">
+                            <h3>✏️ 우리 반 맞춤형 존댓말 문제 등록</h3>
+                            <form id="form-custom-quest">
+                                <div class="input-group">
+                                    <label for="cq-title">퀘스트/문제 제목</label>
+                                    <input type="text" id="cq-title" placeholder="예: 단원평가 대비 존댓말 교정" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="cq-wrong">틀린 문장 (반말 또는 오류 문장)</label>
+                                    <input type="text" id="cq-wrong" placeholder="예: 선생님 밥 먹어!" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="cq-correct">올바른 정답 문장 (어절 구분: 공백)</label>
+                                    <input type="text" id="cq-correct" placeholder="예: 선생님께서 진지를 잡수세요" required>
+                                </div>
+                                <button type="submit" class="btn-pixel btn-success">➕ 커스텀 문제 저장</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- [화면 6] 최종 관리자 (Super Admin) 승인/거절 페이지 -->
+            <section id="view-super-admin" class="view-screen hidden">
+                <div class="super-admin-container pixel-box">
+                    <h2>👑 최종 관리자 (Super Admin) - 교사 가입 승인 페이지</h2>
+                    <p>가입 신청한 교사 계정을 승인하면 해당 학반의 관리자 권한이 부여됩니다.</p>
+                    
+                    <table class="pixel-table">
+                        <thead>
+                            <tr>
+                                <th>교사 이름/이메일</th>
+                                <th>학교명</th>
+                                <th>학년-반</th>
+                                <th>클래스 이름</th>
+                                <th>신청 상태</th>
+                                <th>승인 / 거절 관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="super-admin-tbody">
+                            <!-- JS 렌더링 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- 모달 1: 퀘스트 결과 및 마스터 배지 획득 -->
+        <div id="modal-quest-result" class="modal-overlay hidden">
+            <div class="modal-box pixel-box">
+                <h2 id="modal-result-title">🎉 퀘스트 완료!</h2>
+                <div class="modal-result-body">
+                    <div id="badge-reward-anim" class="badge-reward-anim hidden">
+                        <div id="reward-badge-icon" class="big-badge-icon">🎖️</div>
+                        <h3 id="reward-badge-name">마스터 배지 획득!</h3>
+                    </div>
+                    <p class="final-score-text">최종 점수: <strong id="modal-final-score">95</strong>점</p>
+                    <p id="modal-score-comment">상황에 맞는 올바른 존댓말을 훌륭하게 사용했습니다!</p>
+                </div>
+                <button id="btn-close-quest-modal" class="btn-pixel btn-primary">확인</button>
+            </div>
+        </div>
+
+        <!-- 모달 2: 서바이벌 게임 오버 및 오답 요약 팝업 -->
+        <div id="modal-survival-gameover" class="modal-overlay hidden">
+            <div class="modal-box pixel-box modal-lg">
+                <h2>💔 바른말 수호대 탐험 종료!</h2>
+                <p>맞힌 문제 수: <strong id="so-correct-count">5</strong>개</p>
+                <hr class="pixel-hr">
+                <h3>📋 내가 틀렸던 문제 요약 오답 노트</h3>
+                <div id="so-wrong-list" class="so-wrong-list">
+                    <!-- 틀렸던 문장과 정답 비교 표시 -->
+                </div>
+                <button id="btn-close-survival-modal" class="btn-pixel btn-primary">확인 및 랭킹 등록</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDK Modules & Custom Scripts -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/data.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/ai-engine.js"></script>
+    <script type="module" src="js/badge-system.js"></script>
+    <script type="module" src="js/game-quest.js"></script>
+    <script type="module" src="js/game-survival.js"></script>
+    <script type="module" src="js/teacher-dashboard.js"></script>
+    <script type="module" src="js/super-admin.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
