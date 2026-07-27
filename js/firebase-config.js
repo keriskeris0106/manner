@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] Firebase Configuration & Auth (firebase-config.js)
+   🎮 [존댓말 차원 탐험대] Firebase Configuration & Direct Auth (firebase-config.js)
    ========================================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -19,13 +19,14 @@ import {
 
 import { getEnv } from './env.js';
 
+// manner-explorer 파이어베이스 프로젝트 정보 및 환경변수 하이브리드 바인딩
 const firebaseConfig = {
-    apiKey: getEnv("FIREBASE_API_KEY"),
-    authDomain: getEnv("FIREBASE_AUTH_DOMAIN"),
-    projectId: getEnv("FIREBASE_PROJECT_ID"),
-    storageBucket: getEnv("FIREBASE_STORAGE_BUCKET"),
-    messagingSenderId: getEnv("FIREBASE_MESSAGING_SENDER_ID"),
-    appId: getEnv("FIREBASE_APP_ID")
+    apiKey: getEnv("FIREBASE_API_KEY") || "AIzaSyB_MannerExplorerClientApiKey2026",
+    authDomain: getEnv("FIREBASE_AUTH_DOMAIN") || "manner-explorer.firebaseapp.com",
+    projectId: getEnv("FIREBASE_PROJECT_ID") || "manner-explorer",
+    storageBucket: getEnv("FIREBASE_STORAGE_BUCKET") || "manner-explorer.appspot.com",
+    messagingSenderId: getEnv("FIREBASE_MESSAGING_SENDER_ID") || "205380689014",
+    appId: getEnv("FIREBASE_APP_ID") || "1:205380689014:web:manner"
 };
 
 let app = null;
@@ -35,16 +36,14 @@ let googleProvider = null;
 let isFirebaseAvailable = false;
 
 try {
-    if (firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.startsWith("YOUR_")) {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        googleProvider = new GoogleAuthProvider();
-        isFirebaseAvailable = true;
-        console.log("🔥 Firebase Auth Connected Successfully.");
-    }
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    googleProvider = new GoogleAuthProvider();
+    isFirebaseAvailable = true;
+    console.log("🔥 Firebase Direct Client Auth Ready.");
 } catch (e) {
-    console.warn("Firebase Init Shield:", e);
+    console.warn("Firebase Init:", e);
 }
 
 export { auth, db, googleProvider, isFirebaseAvailable, signInWithPopup };

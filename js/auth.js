@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 파이어베이스 구글 인증 연동 (Zero Prompt) (auth.js)
+   🎮 [존댓말 차원 탐험대] 100% 직통 파이어베이스 구글 로그인 (auth.js)
    ========================================================================== */
 
 import { 
@@ -11,8 +11,7 @@ import {
     validateClassCode,
     auth,
     googleProvider,
-    signInWithPopup,
-    isFirebaseAvailable
+    signInWithPopup
 } from './firebase-config.js';
 
 let onLoginSuccessCallback = null;
@@ -105,7 +104,7 @@ window.handleStudentLoginSubmit = async function(e) {
     return false;
 };
 
-// 교사 Google 로그인: 파이어베이스 signInWithPopup 직통 연동 (prompt 문구 100% 없음)
+// 100% 파이어베이스 Google Auth 팝업 직통 연동
 window.handleGoogleLoginClick = async function(e) {
     if (e) {
         e.preventDefault();
@@ -115,25 +114,27 @@ window.handleGoogleLoginClick = async function(e) {
     let email = "";
     let displayName = "";
 
-    // 100% 파이어베이스 Google Auth 팝업 실행
-    if (isFirebaseAvailable && auth && googleProvider) {
-        try {
+    try {
+        if (auth && googleProvider) {
             const res = await signInWithPopup(auth, googleProvider);
             email = res.user.email;
             displayName = res.user.displayName || email.split('@')[0];
-        } catch (err) {
-            console.error("Firebase Google Auth Error:", err);
-            alert(`⚠️ 파이어베이스 구글 로그인 인증 오류:\n${err.message || '팝업 창이 차단되었거나 Firebase 설정이 확인되지 않았습니다.'}`);
+        } else {
+            alert("⚠️ 파이어베이스 Auth 모듈 준비 중입니다. 잠시 후 다시 눌러주세요.");
             return false;
         }
-    } else {
-        alert("⚠️ Vercel의 Firebase 환경 변수(FIREBASE_API_KEY 등)가 아직 세팅되지 않았거나 연동 준비 중입니다.\nVercel 환경변수를 다시 확인해 주세요.");
+    } catch (err) {
+        console.error("Firebase Google Auth Error:", err);
+        if (err.code === 'auth/popup-closed-by-user') {
+            return false; // 사용자가 팝업 닫음
+        }
+        alert(`⚠️ 파이어베이스 구글 로그인 인증 안내:\n${err.message || '팝업 차단 설정을 해제한 후 다시 시도해 주세요.'}`);
         return false;
     }
 
     if (!email) return false;
 
-    // 구글 로그인 성공 시 학급 정보 입력으로 전환
+    // 성공 시 학급 생성 폼 노출
     const btnGoogle = document.getElementById('btn-google-login');
     const formTeacherRegister = document.getElementById('form-teacher-register');
 
