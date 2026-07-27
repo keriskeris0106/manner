@@ -48,14 +48,14 @@
                         <p class="hero-subtitle">엉망이 된 차원의 존댓말을 구하고 바른말 수호자가 되어보세요!</p>
                     </div>
 
-                    <!-- 역할 선택 탭 (클릭 이벤트 100% 보장 구조) -->
+                    <!-- 100% 클릭 보장 인라인 이벤트 적용 -->
                     <div class="login-role-selector">
-                        <div id="tab-student-login" class="role-card active">
+                        <div id="tab-student-login" class="role-card active" onclick="if(window.selectLoginRole) window.selectLoginRole('student');">
                             <div class="role-icon">🎒</div>
                             <h2>학생 탐험대 로그인</h2>
                             <p>선생님이 주신 클래스 코드로 입장!</p>
                         </div>
-                        <div id="tab-teacher-login" class="role-card">
+                        <div id="tab-teacher-login" class="role-card" onclick="if(window.selectLoginRole) window.selectLoginRole('teacher');">
                             <div class="role-icon">👩‍🏫</div>
                             <h2>교사 로그인</h2>
                             <p>구글 로그인 및 학급 생성</p>
@@ -105,7 +105,7 @@
                         </button>
                     </form>
 
-                    <!-- 교사 로그인 & 가입 폼 (클릭 시 100% 즉시 구글 로그인 버튼 표출) -->
+                    <!-- 교사 로그인 & 가입 폼 -->
                     <div id="box-teacher-login" class="login-form-box" style="display: none;">
                         <div class="teacher-auth-actions" style="margin-bottom: 15px;">
                             <button id="btn-google-login" type="button" class="btn-pixel btn-google btn-block btn-lg">
