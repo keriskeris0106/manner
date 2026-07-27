@@ -1,29 +1,39 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 바른말 수호대 (어절 블록 서바이벌) (game-survival.js)
+   🎮 [존댓말 차원 탐험대] 바른말 수호대 어절 서바이벌 컨트롤러 (game-survival.js)
    ========================================================================== */
 
-import { SURVIVAL_PROBLEMS } from './data.js';
+import { SURVIVAL_PROBLEMS_DB } from './data.js';
 import { saveLeaderboardScore, getCurrentUserSession, updateStudentProgress } from './firebase-config.js';
 
 let hearts = 3;
-let timerSeconds = 300; // 5분
+let timerSeconds = 300;
 let timerInterval = null;
-let currentProblemIndex = 0;
 let correctCount = 0;
 let assembledWords = [];
 let wrongHistoryList = [];
+let currentProblem = null;
 
-export function startSurvivalGame(onGameOverCallback) {
+export function startSurvivalGame(onGameOverCallback, onHomeClickCallback) {
     hearts = 3;
     timerSeconds = 300;
-    currentProblemIndex = 0;
     correctCount = 0;
     assembledWords = [];
     wrongHistoryList = [];
 
+    // 10번: 🏠 로비로 (홈으로) 버튼 이벤트
+    const btnHome = document.getElementById('btn-home-survival');
+    if (btnHome) {
+        btnHome.onclick = () => {
+            if (confirm("🏠 진행 중인 바른말 수호대를 종료하고 로비로 돌아가시겠습니까?")) {
+                clearInterval(timerInterval);
+                onHomeClickCallback();
+            }
+        };
+    }
+
     updateHeartsUI();
     startTimer(onGameOverCallback);
-    loadProblem(currentProblemIndex, onGameOverCallback);
+    loadRandomProblem(onGameOverCallback);
 }
 
 function updateHeartsUI() {
@@ -49,18 +59,20 @@ function startTimer(onGameOverCallback) {
     }, 1000);
 }
 
-function loadProblem(index, onGameOverCallback) {
+// 14번: 20개 이상 문장 DB 무작위 랜덤 추출
+function loadRandomProblem(onGameOverCallback) {
     assembledWords = [];
     renderAssembledSlots();
 
-    const prob = SURVIVAL_PROBLEMS[index % SURVIVAL_PROBLEMS.length];
-    document.getElementById('boss-attack-text').textContent = prob.bossAttack;
+    const randomIndex = Math.floor(Math.random() * SURVIVAL_PROBLEMS_DB.length);
+    currentProblem = SURVIVAL_PROBLEMS_DB[randomIndex];
 
-    // 흩어진 블록 랜덤 셔플 배치
+    document.getElementById('boss-attack-text').textContent = currentProblem.bossAttack;
+
     const blocksContainer = document.getElementById('blocks-container');
     blocksContainer.innerHTML = '';
 
-    const shuffledPool = [...prob.pool].sort(() => Math.random() - 0.5);
+    const shuffledPool = [...currentProblem.pool].sort(() => Math.random() - 0.5);
     shuffledPool.forEach(word => {
         const block = document.createElement('button');
         block.className = 'word-block';
@@ -76,15 +88,14 @@ function loadProblem(index, onGameOverCallback) {
         blocksContainer.appendChild(block);
     });
 
-    // 리셋 및 제출 버튼 이벤트
     document.getElementById('btn-reset-blocks').onclick = () => {
         assembledWords = [];
         renderAssembledSlots();
-        loadProblem(index, onGameOverCallback);
+        loadRandomProblem(onGameOverCallback);
     };
 
     document.getElementById('btn-submit-sentence').onclick = () => {
-        checkAnswer(prob, onGameOverCallback);
+        checkAnswer(currentProblem, onGameOverCallback);
     };
 }
 
@@ -98,7 +109,6 @@ function renderAssembledSlots() {
         slotBlock.onclick = () => {
             assembledWords.splice(i, 1);
             renderAssembledSlots();
-            // 해당 블록 활성화 복구
             const blocks = document.querySelectorAll('#blocks-container .word-block');
             blocks.forEach(b => {
                 if (b.textContent === w) {
@@ -113,20 +123,18 @@ function renderAssembledSlots() {
 
 async function checkAnswer(prob, onGameOverCallback) {
     const userSentence = assembledWords.join(' ');
+    // 15번: 마침표가 들어간 하나의 완벽한 올바른 문장
     const correctSentence = prob.correctOrder.join(' ');
 
     if (userSentence === correctSentence) {
-        alert("✨ 정답입니다! 반말 몬스터를 물리쳤습니다!");
+        alert("✨ 정답입니다! 올바른 존댓말 한 문장으로 반말 몬스터를 물리쳤습니다!");
         correctCount++;
-        currentProblemIndex++;
         updateHeartsUI();
-        loadProblem(currentProblemIndex, onGameOverCallback);
+        loadRandomProblem(onGameOverCallback);
     } else {
-        // 오답 처리
         hearts--;
         updateHeartsUI();
 
-        // 오답 기록
         wrongHistoryList.push({
             attack: prob.bossAttack,
             userSentence: userSentence || '(미완성)',
@@ -134,7 +142,6 @@ async function checkAnswer(prob, onGameOverCallback) {
             explanation: prob.explanation
         });
 
-        // DB 오답 누적
         const curr = getCurrentUserSession();
         if (curr && curr.studentId) {
             updateStudentProgress(curr.studentId, [], prob.errCategory, {
@@ -147,11 +154,11 @@ async function checkAnswer(prob, onGameOverCallback) {
 
         if (hearts <= 0) {
             clearInterval(timerInterval);
-            endGame(onGameOverCallback, "💔 목숨이 모두 소진되었습니다!");
+            endGame(onGameOverCallback, "💔 하트(목숨)가 모두 소진되었습니다!");
         } else {
-            alert(`❌ 틀렸습니다! (하트 -1개)\n원래 위치로 흩어집니다. 정답을 맞힐 때까지 다시 시도해 주세요!`);
+            alert(`❌ 틀렸습니다! (하트 -1개)\n원래 자리로 흩어집니다. 정답을 맞힐 때까지 다시 조합해 보세요!`);
             assembledWords = [];
-            loadProblem(currentProblemIndex, onGameOverCallback);
+            loadRandomProblem(onGameOverCallback);
         }
     }
 }
@@ -159,11 +166,10 @@ async function checkAnswer(prob, onGameOverCallback) {
 function endGame(onGameOverCallback, reasonMsg) {
     clearInterval(timerInterval);
 
-    // 랭킹 저장
     const curr = getCurrentUserSession();
     const name = curr ? curr.name : '익명';
     const classTitle = curr ? `${curr.grade || 3}학년 ${curr.classNum || 1}반` : '자유 탐험대';
-    const title = curr ? (curr.currentTitle || '🌱 새싹 탐험대') : '🌱 새싹 탐험대';
+    const title = curr ? (curr.currentTitle || '🌱 새싹 탐험대 (Lv.1)') : '🌱 새싹 탐험대 (Lv.1)';
 
     saveLeaderboardScore({
         name,
@@ -173,7 +179,6 @@ function endGame(onGameOverCallback, reasonMsg) {
         date: new Date().toLocaleDateString()
     });
 
-    // 요구사항 3번: 게임 오버 시 틀렸던 문제 팝업 노출!
     const modal = document.getElementById('modal-survival-gameover');
     document.getElementById('so-correct-count').textContent = correctCount;
 
@@ -181,7 +186,7 @@ function endGame(onGameOverCallback, reasonMsg) {
     wrongListContainer.innerHTML = '';
 
     if (wrongHistoryList.length === 0) {
-        wrongListContainer.innerHTML = '<p>🎉 틀린 문제 없이 완벽하게 완료하셨습니다!</p>';
+        wrongListContainer.innerHTML = '<p>🎉 틀린 문제 없이 완벽하게 서바이벌을 정복했습니다!</p>';
     } else {
         wrongHistoryList.forEach((w, idx) => {
             const item = document.createElement('div');
@@ -189,10 +194,10 @@ function endGame(onGameOverCallback, reasonMsg) {
             item.style.marginBottom = '12px';
             item.style.textAlign = 'left';
             item.innerHTML = `
-                <p><strong>${idx + 1}. 공격 문장:</strong> ${w.attack}</p>
-                <p style="color: #ef476f;">❌ 제출한 문장: ${w.userSentence}</p>
-                <p style="color: #06d6a0;">✅ 올바른 정답: ${w.correctSentence}</p>
-                <p style="font-size: 0.85rem; color: #ffd166;">💡 교정 핵심: ${w.explanation}</p>
+                <p><strong>[문제 #${idx + 1}] 반말 공격:</strong> ${w.attack}</p>
+                <p style="color: #ef476f;">❌ 내가 조합한 문장: ${w.userSentence}</p>
+                <p style="color: #06d6a0;">✅ 올바른 마침표 한 문장: ${w.correctSentence}</p>
+                <p style="font-size: 0.85rem; color: #ffd166;">💡 존댓말 핵심: ${w.explanation}</p>
                 <hr class="pixel-hr">
             `;
             wrongListContainer.appendChild(item);

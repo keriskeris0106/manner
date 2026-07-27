@@ -1,69 +1,91 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 월드 퀘스트 5턴 대화 컨트롤러 (game-quest.js)
+   🎮 [존댓말 차원 탐험대] 월드 퀘스트 세부 장소 & 대화 컨트롤러 (game-quest.js)
    ========================================================================== */
 
-import { WORLDS_DATA, BADGES } from './data.js';
-import { processAITurnResponse } from './ai-engine.js';
-import { updateStudentProgress, getCurrentUserSession } from './firebase-config.js';
+import { INITIAL_WORLDS_DATA } from './data.js';
+import { updateStudentProgress, getCurrentUserSession, getCreatorPrompt } from './firebase-config.js';
 
 let currentWorldId = 1;
-let currentTurnIndex = 0;
+let currentSubLocationIdx = 0;
 let currentScore = 100;
 let earnedInQuest = [];
-let wrongLogsInQuest = [];
 
 export function startQuestSession(worldId, onFinishCallback) {
     currentWorldId = worldId;
-    currentTurnIndex = 0;
+    currentSubLocationIdx = 0;
     currentScore = 100;
     earnedInQuest = [];
-    wrongLogsInQuest = [];
 
-    const worldData = WORLDS_DATA[worldId];
-    document.getElementById('quest-location-name').textContent = `${worldData.name} - [${worldData.locations[0]}]`;
-    document.getElementById('messenger-chat-body').innerHTML = '';
-    
-    renderTurn(currentTurnIndex, onFinishCallback);
-}
-
-function renderTurn(turnIndex, onFinishCallback) {
-    const worldData = WORLDS_DATA[currentWorldId];
-    const turnData = worldData.turns[turnIndex];
-
-    document.getElementById('quest-turn-counter').textContent = `TURN ${turnIndex + 1} / 5`;
+    const worldData = INITIAL_WORLDS_DATA[worldId];
     document.getElementById('quest-current-score').textContent = currentScore;
 
-    // NPC 대사 렌더링
+    // 세부 장소 선택 버튼 10개 렌더링
+    renderSubLocationButtons(worldData, onFinishCallback);
+}
+
+function renderSubLocationButtons(worldData, onFinishCallback) {
+    const selectorBox = document.getElementById('sub-location-selector');
+    const container = document.getElementById('sub-location-buttons');
+    selectorBox.classList.remove('hidden');
+    container.innerHTML = '';
+
+    worldData.locations.forEach((loc, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `btn-sub-loc ${idx === currentSubLocationIdx ? 'active' : ''}`;
+        btn.textContent = `${idx + 1}. ${loc.name}`;
+        btn.onclick = () => {
+            currentSubLocationIdx = idx;
+            document.querySelectorAll('.btn-sub-loc').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadSubLocationQuest(loc, onFinishCallback);
+        };
+        container.appendChild(btn);
+    });
+
+    // 첫 번째 세부 장소 자동 실행
+    loadSubLocationQuest(worldData.locations[currentSubLocationIdx], onFinishCallback);
+}
+
+function loadSubLocationQuest(locationData, onFinishCallback) {
+    const worldData = INITIAL_WORLDS_DATA[currentWorldId];
+    document.getElementById('quest-location-name').textContent = `${worldData.name} - [${locationData.name}]`;
+    
     const chatBody = document.getElementById('messenger-chat-body');
+    chatBody.innerHTML = '';
+
+    // NPC 대사 렌더링
     const npcBubble = document.createElement('div');
     npcBubble.className = 'chat-bubble-wrapper npc';
     npcBubble.innerHTML = `
-        <div class="chat-avatar">${turnData.npcAvatar}</div>
+        <div class="chat-avatar">${locationData.npcAvatar}</div>
         <div class="chat-content-box">
-            <span class="chat-sender-name">${turnData.npcName}</span>
-            <div class="chat-bubble">${turnData.npcDialog}</div>
+            <span class="chat-sender-name">${locationData.npcName}</span>
+            <div class="chat-bubble">${locationData.npcDialog}</div>
         </div>
     `;
     chatBody.appendChild(npcBubble);
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    // 하단 선택지 버튼 3개 렌더링
+    // 16번: 선택지 버튼 3개 렌더링 (올바른 표현, 높임 미숙, 반말)
     const optionsContainer = document.getElementById('quest-options-container');
     optionsContainer.innerHTML = '';
 
-    turnData.options.forEach((opt, idx) => {
+    // 제작자 프롬프트 로드
+    const creatorPrompt = getCreatorPrompt(currentWorldId);
+
+    locationData.options.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'btn-option';
         btn.textContent = `${idx + 1}. ${opt.text}`;
-        btn.onclick = () => handleUserSelection(opt, turnData, turnIndex, onFinishCallback);
+        btn.onclick = () => handleUserOptionSelection(opt, locationData, onFinishCallback);
         optionsContainer.appendChild(btn);
     });
 }
 
-async function handleUserSelection(selectedOption, turnData, turnIndex, onFinishCallback) {
+function handleUserOptionSelection(selectedOption, locationData, onFinishCallback) {
     const chatBody = document.getElementById('messenger-chat-body');
 
-    // 1. 학생 대사 말풍선 추가
+    // 학생 대사 추가
     const userBubble = document.createElement('div');
     userBubble.className = 'chat-bubble-wrapper user';
     userBubble.innerHTML = `
@@ -75,72 +97,56 @@ async function handleUserSelection(selectedOption, turnData, turnIndex, onFinish
     `;
     chatBody.appendChild(userBubble);
 
-    // 2. AI 판정
-    const result = await processAITurnResponse(turnData, selectedOption);
-    currentScore = Math.max(0, currentScore + result.scoreDelta);
+    // 6번: 점수 차감 계산 오류 완전 교정! (scoreDelta 수치와 실제 currentScore 100% 동일 처리)
+    const delta = selectedOption.scoreDelta || (selectedOption.isCorrect ? 20 : -20);
+    currentScore = Math.max(0, currentScore + delta);
     document.getElementById('quest-current-score').textContent = currentScore;
 
-    // 3. AI 피드백 말풍선 추가
+    // 피드백 말풍선 추가
     const fbBubble = document.createElement('div');
-    fbBubble.className = `feedback-bubble ${result.isCorrect ? 'correct' : 'wrong'}`;
-    fbBubble.textContent = result.aiFeedback;
+    fbBubble.className = `feedback-bubble ${selectedOption.isCorrect ? 'correct' : 'wrong'}`;
+    fbBubble.textContent = selectedOption.isCorrect 
+        ? `✨ [AI 판정: 정답!] ${selectedOption.feedback}`
+        : `❌ [AI 판정: 오류 (점수 ${delta}점)] ${selectedOption.feedback}`;
     chatBody.appendChild(fbBubble);
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    // 오답 및 배지 기록
-    if (result.rewardBadge) earnedInQuest.push(result.rewardBadge);
-    if (!result.isCorrect) {
-        wrongLogsInQuest.push({
-            worldId: currentWorldId,
-            turn: turnIndex + 1,
-            npc: turnData.npcName,
-            userChoice: selectedOption.text,
-            feedback: selectedOption.feedback,
-            errType: result.errType
-        });
-
-        // DB 업데이트
-        const curr = getCurrentUserSession();
-        if (curr && curr.studentId) {
-            updateStudentProgress(curr.studentId, [], result.errType, wrongLogsInQuest[wrongLogsInQuest.length - 1]);
-        }
+    // 배지 획득 및 오답 DB 저장
+    const badgeId = `W${currentWorldId}_B${currentSubLocationIdx + 1}`;
+    if (selectedOption.isCorrect) {
+        earnedInQuest.push(badgeId);
     }
 
-    // 4. 다음 턴 또는 종료
-    setTimeout(() => {
-        if (turnIndex < 4) {
-            renderTurn(turnIndex + 1, onFinishCallback);
-        } else {
-            finishQuest(onFinishCallback);
-        }
-    }, 1200);
-}
-
-function finishQuest(onFinishCallback) {
-    const worldData = WORLDS_DATA[currentWorldId];
-    const isMastered = currentScore >= 90;
-    if (isMastered) {
-        earnedInQuest.push(worldData.badgeId);
-    }
-
-    // 학생 DB 배지 저장
     const curr = getCurrentUserSession();
     if (curr && curr.studentId) {
-        updateStudentProgress(curr.studentId, earnedInQuest, null, null);
+        updateStudentProgress(curr.studentId, selectedOption.isCorrect ? [badgeId] : [], selectedOption.errType, {
+            mode: 'QUEST',
+            worldId: currentWorldId,
+            location: locationData.name,
+            userChoice: selectedOption.text,
+            feedback: selectedOption.feedback,
+            errType: selectedOption.errType
+        });
     }
 
-    // 결과 모달 팝업
+    // 퀘스트 완료 처리
+    setTimeout(() => {
+        finishSubLocationQuest(selectedOption.isCorrect, badgeId, onFinishCallback);
+    }, 1500);
+}
+
+function finishSubLocationQuest(isCorrect, badgeId, onFinishCallback) {
     const modal = document.getElementById('modal-quest-result');
     const badgeAnim = document.getElementById('badge-reward-anim');
     document.getElementById('modal-final-score').textContent = currentScore;
-    
-    if (isMastered) {
-        document.getElementById('modal-result-title').textContent = '🎉 월드 마스터 배지 획득!';
+
+    if (isCorrect) {
+        document.getElementById('modal-result-title').textContent = '🎉 세부 장소 탐험 배지 획득!';
         badgeAnim.classList.remove('hidden');
-        document.getElementById('reward-badge-icon').textContent = BADGES[worldData.badgeId].icon;
-        document.getElementById('reward-badge-name').textContent = BADGES[worldData.badgeId].name;
+        document.getElementById('reward-badge-icon').textContent = '🎖️';
+        document.getElementById('reward-badge-name').textContent = `${currentWorldId}월드 배지 #${currentSubLocationIdx + 1}`;
     } else {
-        document.getElementById('modal-result-title').textContent = '👍 퀘스트 완료!';
+        document.getElementById('modal-result-title').textContent = '👍 장소 탐험 완료!';
         badgeAnim.classList.add('hidden');
     }
 

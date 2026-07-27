@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 배지 수집 & 칭호 부여 시스템 (badge-system.js)
+   🎮 [존댓말 차원 탐험대] 50개 배지, 5개 월드 순차 해금 및 레틀/칭호 (badge-system.js)
    ========================================================================== */
 
 import { BADGES, TITLES } from './data.js';
@@ -28,12 +28,9 @@ export function renderBadgeGrid(earnedBadgesArray = []) {
         if (isEarned) count++;
 
         const bDiv = document.createElement('div');
-        bDiv.className = `badge-item ${isEarned ? 'earned' : ''}`;
+        bDiv.className = `badge-item-mini ${isEarned ? 'earned' : ''}`;
         bDiv.title = `${b.name}: ${b.desc}`;
-        bDiv.innerHTML = `
-            <div class="b-icon">${b.icon}</div>
-            <span class="b-name">${b.name}</span>
-        `;
+        bDiv.innerHTML = `<div class="b-icon">${isEarned ? b.icon : '🔒'}</div>`;
         badgeGrid.appendChild(bDiv);
     });
 
@@ -44,29 +41,69 @@ export function renderBadgeGrid(earnedBadgesArray = []) {
     return calculateTitle(count);
 }
 
+// 3번: 각 월드당 10개 배지 수집 시 순차적 다음 월드 해금!
 export function updateWorldBadgeStatus(earnedBadgesArray = []) {
     const earnedSet = new Set(earnedBadgesArray);
-    for (let i = 1; i <= 5; i++) {
-        const wbTag = document.getElementById(`wb-${i}`);
-        if (wbTag) {
-            if (earnedSet.has(`MASTER_${i}`)) {
-                wbTag.textContent = '🏆 마스터';
-                wbTag.classList.add('mastered');
+
+    // 각 월드별 획득 배지 수 계산
+    const worldBadgeCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    earnedBadgesArray.forEach(badgeId => {
+        if (BADGES[badgeId]) {
+            const wId = BADGES[badgeId].worldId;
+            if (worldBadgeCounts[wId] !== undefined) {
+                worldBadgeCounts[wId]++;
+            }
+        }
+    });
+
+    for (let w = 1; w <= 5; w++) {
+        const count = worldBadgeCounts[w];
+        const statusTag = document.getElementById(`wb-${w}`);
+        const cardEl = document.getElementById(`wcard-${w}`) || document.querySelector(`[data-world="${w}"]`);
+
+        if (statusTag) {
+            statusTag.textContent = `${count}/10`;
+        }
+
+        // 월드 1은 기본 해금, 월드 2~5는 이전 월드 배지 10개 필요
+        let isUnlocked = false;
+        if (w === 1) isUnlocked = true;
+        else {
+            isUnlocked = (worldBadgeCounts[w - 1] >= 10);
+        }
+
+        if (cardEl) {
+            const enterBtn = cardEl.querySelector('.btn-enter-world');
+            if (isUnlocked) {
+                cardEl.classList.remove('locked');
+                if (enterBtn) {
+                    enterBtn.disabled = false;
+                    enterBtn.textContent = '입장하기 ➔';
+                }
             } else {
-                wbTag.textContent = '미획득';
-                wbTag.classList.remove('mastered');
+                cardEl.classList.add('locked');
+                if (enterBtn) {
+                    enterBtn.disabled = true;
+                    enterBtn.textContent = `🔒 월드 ${w-1} 배지 10개 필요`;
+                }
             }
         }
     }
 
-    // 5개 마스터 배지 모두 획득 시 차원 대통합 해금
-    const masterCount = [1,2,3,4,5].filter(num => earnedSet.has(`MASTER_${num}`)).length;
-    const tabCrossover = document.getElementById('tab-crossover');
-    if (tabCrossover) {
-        if (masterCount >= 5) {
-            tabCrossover.classList.remove('lock-crossover');
-            tabCrossover.innerHTML = '🌌 차원 대통합 (해금!)';
-            tabCrossover.title = '무한 조합 모드에 도전하세요!';
+    // 9번: 차원 대통합 카드 (월드 5 카드 오른쪽 6번째) 50개 모았을 때 해금
+    const totalCount = Object.values(worldBadgeCounts).reduce((a, b) => a + b, 0);
+    const crossoverCard = document.getElementById('wcard-crossover');
+    const btnCrossover = document.getElementById('btn-start-crossover');
+
+    if (crossoverCard && btnCrossover) {
+        if (totalCount >= 50) {
+            crossoverCard.classList.remove('locked');
+            btnCrossover.disabled = false;
+            btnCrossover.textContent = '🌀 무한 탐험 입장!';
+        } else {
+            crossoverCard.classList.add('locked');
+            btnCrossover.disabled = true;
+            btnCrossover.textContent = `🔒 배지 50개 필요 (${totalCount}/50)`;
         }
     }
 }

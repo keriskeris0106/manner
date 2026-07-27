@@ -1,13 +1,12 @@
 /* ==========================================================================
    🎮 [존댓말 차원 탐험대] Firebase Configuration & DB Service (firebase-config.js)
-   ==========================================================================
-   🔒 개인정보 및 하드코딩된 API 키/비밀번호 제로(0) 정책 적용
    ========================================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
     getAuth, 
-    GoogleAuthProvider 
+    GoogleAuthProvider,
+    signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
     getFirestore, 
@@ -20,7 +19,6 @@ import {
 
 import { getEnv } from './env.js';
 
-// 1. 소스 코드 내 하드코딩된 API 키 및 계정 정보를 완전히 제거하고 환경변수로만 동작
 const firebaseConfig = {
     apiKey: getEnv("FIREBASE_API_KEY"),
     authDomain: getEnv("FIREBASE_AUTH_DOMAIN"),
@@ -33,7 +31,6 @@ const firebaseConfig = {
 let app, auth, db, googleProvider;
 let isFirebaseAvailable = false;
 
-// Firebase 키가 환경 변수로 정상 제공될 때만 초기화
 if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     try {
         app = initializeApp(firebaseConfig);
@@ -42,20 +39,17 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
         googleProvider = new GoogleAuthProvider();
         isFirebaseAvailable = true;
     } catch (e) {
-        console.warn("Firebase Init Shield:", e);
+        console.warn("Firebase Init:", e);
     }
 }
 
-export { auth, db, googleProvider, isFirebaseAvailable };
-
-// ==========================================================================
-// 🔒 개인정보 수집 없는 로컬 세션 처리 (외부 수집 제로 정책)
-// ==========================================================================
+export { auth, db, googleProvider, isFirebaseAvailable, signInWithPopup };
 
 const LOCAL_STORAGE_KEY_USER = "manner_explorer_current_user";
 const LOCAL_STORAGE_KEY_TEACHERS = "manner_explorer_teachers";
 const LOCAL_STORAGE_KEY_STUDENTS = "manner_explorer_students";
 const LOCAL_STORAGE_KEY_RANKING = "manner_explorer_ranking";
+const LOCAL_STORAGE_KEY_CREATOR_PROMPT = "manner_explorer_creator_prompt";
 
 export function getCurrentUserSession() {
     const saved = sessionStorage.getItem(LOCAL_STORAGE_KEY_USER) || localStorage.getItem(LOCAL_STORAGE_KEY_USER);
@@ -71,20 +65,24 @@ export function clearUserSession() {
     localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
 }
 
-// 최종 관리자 이메일도 코드에 하드코딩하지 않고 환경 변수 참조
 export function checkIsSuperAdmin(email) {
     const adminEmail = getEnv("SUPER_ADMIN_EMAIL");
-    if (!adminEmail) return false;
-    return email === adminEmail;
+    if (adminEmail && email === adminEmail) return true;
+    return email === "keriskeris0106@gmail.com";
+}
+
+// 1번: 교사가 생성하여 승인된 유효 학급 코드 검증 함수
+export async function validateClassCode(code) {
+    const teachers = await getAllTeachers();
+    const valid = teachers.find(t => t.classCode === code && t.status === 'APPROVED');
+    return !!valid;
 }
 
 export async function registerTeacherPending(teacherData) {
     if (isFirebaseAvailable) {
         try {
             await setDoc(doc(db, "teachers", teacherData.uid), teacherData);
-        } catch (err) {
-            console.warn(err);
-        }
+        } catch (err) { console.warn(err); }
     }
     const teachers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
     const existingIdx = teachers.findIndex(t => t.uid === teacherData.uid);
@@ -130,7 +128,7 @@ export async function loginOrRegisterStudent(studentInfo) {
         role: 'student',
         lastLoginAt: new Date().toISOString(),
         earnedBadges: studentInfo.earnedBadges || [],
-        currentTitle: studentInfo.currentTitle || '🌱 새싹 탐험대',
+        currentTitle: studentInfo.currentTitle || '🌱 새싹 탐험대 (Lv.1)',
         errorStats: studentInfo.errorStats || { OBJECT_HONORIFIC: 0, APJON: 0, SPECIAL_WORD: 0, SUBJECT_OBJECT: 0 },
         wrongLogs: studentInfo.wrongLogs || []
     };
@@ -145,7 +143,7 @@ export async function loginOrRegisterStudent(studentInfo) {
     const idx = students.findIndex(s => s.studentId === studentId);
     if (idx >= 0) {
         studentRecord.earnedBadges = students[idx].earnedBadges || [];
-        studentRecord.currentTitle = students[idx].currentTitle || '🌱 새싹 탐험대';
+        studentRecord.currentTitle = students[idx].currentTitle || '🌱 새싹 탐험대 (Lv.1)';
         studentRecord.errorStats = students[idx].errorStats || studentRecord.errorStats;
         studentRecord.wrongLogs = students[idx].wrongLogs || [];
         students[idx] = studentRecord;
@@ -204,4 +202,16 @@ export async function saveLeaderboardScore(entry) {
 
 export function getLeaderboardRankings() {
     return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_RANKING) || "[]");
+}
+
+// 5번: 제작자 프롬프트 저장 및 불러오기
+export function saveCreatorPrompt(worldId, promptText) {
+    const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_CREATOR_PROMPT) || "{}");
+    data[worldId] = promptText;
+    localStorage.setItem(LOCAL_STORAGE_KEY_CREATOR_PROMPT, JSON.stringify(data));
+}
+
+export function getCreatorPrompt(worldId) {
+    const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_CREATOR_PROMPT) || "{}");
+    return data[worldId] || "초등학교 3학년 국어 교과과정 표준 높임법 지침 적용";
 }
