@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 메인 앱 컨트롤러 & 100% 이벤트/화면 보장 (app.js)
+   🎮 [존댓말 차원 탐험대] 철통 전역 이벤트 컨트롤러 (app.js)
    ========================================================================== */
 
 import { initAuthSystem, switchScreenView } from './auth.js';
@@ -10,14 +10,17 @@ import { initTeacherDashboard } from './teacher-dashboard.js';
 import { 
     getLeaderboardRankings, 
     getCurrentUserSession, 
+    clearUserSession,
     saveCreatorPrompt, 
     getCreatorPrompt 
 } from './firebase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🌌 존댓말 차원 탐험대 v2.0 가동!");
+    console.log("🌌 존댓말 차원 탐험대 v2.0 철통 가동!");
 
     function handleLoginSuccess(user) {
+        if (!user) return;
+
         const userDisplayName = document.getElementById('user-display-name');
         const userTitleDisplay = document.getElementById('user-title-display');
         const lobbyUserName = document.getElementById('lobby-user-name');
@@ -28,184 +31,134 @@ document.addEventListener('DOMContentLoaded', () => {
         const dashCodeNum = document.getElementById('dash-code-num');
 
         const classCode = user.classCode || '363636';
+        const earned = user.earnedBadges || [];
+        const title = calculateTitle(earned.length);
 
         if (user.role === 'teacher') {
-            // 교사도 동일한 게임 로비로 입장!
+            // 교사 계정 로그인 시 명확한 교사 정보 렌더링
             if (btnTeacherManage) btnTeacherManage.classList.remove('hidden');
-            if (userDisplayName) userDisplayName.textContent = `${user.name || '선생님'} (교사)`;
-            if (lobbyUserName) lobbyUserName.textContent = `${user.name || '선생님'}`;
-            if (lobbyUserClass) lobbyUserClass.textContent = `${user.className || '학급'} (코드: ${classCode})`;
+            if (userDisplayName) userDisplayName.textContent = `👩‍🏫 ${user.name || '선생님'} (${user.className || '교사'})`;
+            if (userTitleDisplay) userTitleDisplay.textContent = '👑 학급 관리자';
+            if (lobbyUserName) lobbyUserName.textContent = `👩‍🏫 ${user.name || '선생님'}`;
+            if (lobbyUserClass) lobbyUserClass.textContent = `${user.className || '학급'} (초대코드: ${classCode})`;
+            if (lobbyUserTitle) lobbyUserTitle.textContent = '👑 학급 관리자';
+
             if (dashClassTitle) dashClassTitle.textContent = `${user.className || '우리 반'}`;
             if (dashCodeNum) dashCodeNum.textContent = classCode;
-
-            switchScreenView('view-lobby');
         } else {
-            // 학생 로그인
+            // 학생 계정 로그인
             if (btnTeacherManage) btnTeacherManage.classList.add('hidden');
-            const earned = user.earnedBadges || [];
-            const title = calculateTitle(earned.length);
-
             if (userDisplayName) userDisplayName.textContent = `${user.name} (${user.grade}학년 ${user.classNum}반)`;
             if (userTitleDisplay) userTitleDisplay.textContent = title;
             if (lobbyUserName) lobbyUserName.textContent = user.name;
             if (lobbyUserClass) lobbyUserClass.textContent = `${user.grade}학년 ${user.classNum}반 (코드: ${classCode})`;
             if (lobbyUserTitle) lobbyUserTitle.textContent = title;
+        }
 
+        // 배지 그리드 안전 렌더링
+        try {
             renderBadgeGrid(earned);
             updateWorldBadgeStatus(earned);
+        } catch (e) {
+            console.warn("Badge Render Shield:", e);
+        }
+
+        switchScreenView('view-lobby');
+    }
+
+    // 전역 글로벌 클릭 이벤트 핸들러 등록 (HTML 인라인 100% 호환!)
+    window.enterWorldQuest = function(worldId) {
+        const curr = getCurrentUserSession();
+        const earned = (curr && curr.earnedBadges) ? curr.earnedBadges : [];
+        
+        const card = document.getElementById(`wcard-${worldId}`);
+        if (card && card.classList.contains('locked')) {
+            alert('🔒 이전 월드의 10개 배지를 모두 100점 만점으로 모아야 다음 월드가 해금됩니다!');
+            return;
+        }
+
+        switchScreenView('view-quest');
+        startQuestSession(worldId, (newBadges) => {
+            const activeUser = getCurrentUserSession();
+            if (activeUser) handleLoginSuccess(activeUser);
+        });
+    };
+
+    window.openTeacherManagement = function() {
+        switchScreenView('view-teacher-dashboard');
+        initTeacherDashboard();
+    };
+
+    window.closeTeacherDashboard = function() {
+        switchScreenView('view-lobby');
+    };
+
+    window.switchLobbyTab = function(tabTarget, btnEl) {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        const activePanel = document.getElementById(`tab-content-${tabTarget}`);
+        if (activePanel) activePanel.classList.remove('hidden');
+
+        if (tabTarget === 'survival') {
+            renderSurvivalHallRankings();
+        } else if (tabTarget === 'ai-notes') {
+            renderAINotesTab();
+        }
+    };
+
+    window.launchSurvivalGame = function() {
+        switchScreenView('view-survival');
+        startSurvivalGame(
+            () => {
+                switchScreenView('view-lobby');
+                const tabSurv = document.querySelector('[data-tab="survival"]');
+                if (tabSurv) tabSurv.click();
+            },
+            () => switchScreenView('view-lobby')
+        );
+    };
+
+    window.exitQuestToLobby = function() {
+        if (confirm("🎮 월드 지도로 돌아가시겠습니까?")) {
             switchScreenView('view-lobby');
         }
-    }
+    };
 
-    // 인증 시스템 초기화 및 자동 로그인
-    initAuthSystem({
-        onUserLoginSuccess: handleLoginSuccess,
-        onLogout: () => switchScreenView('view-login')
-    });
+    window.openLevelGuideModal = function() {
+        const modal = document.getElementById('modal-level-guide');
+        if (modal) modal.classList.remove('hidden');
+    };
 
-    // [👩‍🏫 학생 관리] 버튼 클릭 시 교사 대시보드 팝업/화면 노출
-    const btnTeacherManage = document.getElementById('btn-teacher-manage');
-    if (btnTeacherManage) {
-        btnTeacherManage.onclick = () => {
-            switchScreenView('view-teacher-dashboard');
-            initTeacherDashboard();
-        };
-    }
-
-    // 교사 대시보드내 [🏠 게임 로비로 돌아가기] 버튼
-    const btnCloseDashView = document.getElementById('btn-close-dash-view');
-    if (btnCloseDashView) {
-        btnCloseDashView.onclick = () => {
-            switchScreenView('view-lobby');
-        };
-    }
-
-    // 레벨/칭호 가이드 팝업
-    const btnTitleDisplay = document.getElementById('user-title-display');
-    const btnLobbyTitle = document.getElementById('lobby-user-title');
-    const modalLevel = document.getElementById('modal-level-guide');
-    const btnCloseLevel = document.getElementById('btn-close-level-modal');
-
-    const openLevelModal = () => { if (modalLevel) modalLevel.classList.remove('hidden'); };
-    if (btnTitleDisplay) btnTitleDisplay.onclick = openLevelModal;
-    if (btnLobbyTitle) btnLobbyTitle.onclick = openLevelModal;
-    if (btnCloseLevel) btnCloseLevel.onclick = () => modalLevel.classList.add('hidden');
-
-    // 제작자 마스터 모드 (암호: 0106)
-    const btnCreatorMode = document.getElementById('btn-creator-mode');
-    const modalCreator = document.getElementById('modal-creator-master');
-    const btnCloseCreator = document.getElementById('btn-close-creator-modal');
-    const btnSaveCreator = document.getElementById('btn-save-creator-data');
-    const creatorWorldSelect = document.getElementById('creator-target-world');
-    const creatorPromptText = document.getElementById('creator-prompt-template');
-
-    if (btnCreatorMode) {
-        btnCreatorMode.onclick = () => {
-            const code = prompt("🛠️ 제작자 마스터 암호 코드를 입력하세요:");
-            if (code === '0106' || code === 'creator' || code === 'keris') {
-                modalCreator.classList.remove('hidden');
+    window.openCreatorMaster = function() {
+        const modal = document.getElementById('modal-creator-master');
+        const code = prompt("🛠️ 제작자 마스터 암호 코드를 입력하세요:");
+        if (code === '0106' || code === 'creator' || code === 'keris') {
+            if (modal) modal.classList.remove('hidden');
+            const creatorWorldSelect = document.getElementById('creator-target-world');
+            const creatorPromptText = document.getElementById('creator-prompt-template');
+            if (creatorWorldSelect && creatorPromptText) {
                 creatorPromptText.value = getCreatorPrompt(creatorWorldSelect.value);
-            } else if (code !== null) {
-                alert("❌ 제작자 암호 코드가 올바르지 않습니다.");
             }
-        };
-    }
-
-    if (creatorWorldSelect) {
-        creatorWorldSelect.onchange = () => {
-            creatorPromptText.value = getCreatorPrompt(creatorWorldSelect.value);
-        };
-    }
-
-    if (btnSaveCreator) {
-        btnSaveCreator.onclick = () => {
-            const wId = creatorWorldSelect.value;
-            const text = creatorPromptText.value;
-            saveCreatorPrompt(wId, text);
-            alert(`💾 ${wId}월드의 표준 교과 프롬프트 템플릿이 저장되고 AI에 반영되었습니다!`);
-            modalCreator.classList.add('hidden');
-        };
-    }
-    if (btnCloseCreator) btnCloseCreator.onclick = () => modalCreator.classList.add('hidden');
-
-    // 모드 탭 전환 (스토리, 서바이벌, AI 오답노트)
-    const modeTabs = document.querySelectorAll('.mode-tab');
-    modeTabs.forEach(tab => {
-        tab.onclick = () => {
-            modeTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            const tabTarget = tab.getAttribute('data-tab');
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-            const activePanel = document.getElementById(`tab-content-${tabTarget}`);
-            if (activePanel) activePanel.classList.remove('hidden');
-
-            if (tabTarget === 'survival') {
-                renderSurvivalHallRankings();
-            } else if (tabTarget === 'ai-notes') {
-                renderAINotesTab();
-            }
-        };
-    });
-
-    // 월드 카드 5개 및 세부 장소 진입 클릭 바인딩
-    document.querySelectorAll('.world-card').forEach(card => {
-        const btn = card.querySelector('.btn-enter-world');
-        const worldId = parseInt(card.getAttribute('data-world'));
-
-        if (btn) {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (card.classList.contains('locked')) {
-                    alert('🔒 이전 월드의 10개 배지를 모두 모아야 다음 월드가 해금됩니다!');
-                    return;
-                }
-                switchScreenView('view-quest');
-                startQuestSession(worldId, (newBadges) => {
-                    const curr = getCurrentUserSession();
-                    if (curr) handleLoginSuccess(curr);
-                });
-            };
+        } else if (code !== null) {
+            alert("❌ 제작자 암호 코드가 올바르지 않습니다.");
         }
-    });
+    };
 
-    // [⬅️ 월드 지도로] 버튼
-    const btnExitQuest = document.getElementById('btn-exit-quest');
-    if (btnExitQuest) {
-        btnExitQuest.onclick = () => {
-            if (confirm("🎮 월드 지도로 돌아가시겠습니까?")) {
-                switchScreenView('view-lobby');
-            }
-        };
-    }
+    window.handleAppLogout = function() {
+        if (confirm("🎮 게임을 종료하고 접속 화면으로 돌아가시겠습니까?")) {
+            clearUserSession();
+            switchScreenView('view-login');
+        }
+    };
 
-    // 바른말 수호대 시작 버튼
-    const btnStartSurvival = document.getElementById('btn-start-survival');
-    if (btnStartSurvival) {
-        btnStartSurvival.onclick = () => {
-            switchScreenView('view-survival');
-            startSurvivalGame(
-                () => {
-                    switchScreenView('view-lobby');
-                    const tabSurv = document.querySelector('[data-tab="survival"]');
-                    if (tabSurv) tabSurv.click();
-                },
-                () => switchScreenView('view-lobby')
-            );
-        };
-    }
-
-    // 차원 대통합 무한 모드 (6번째 카드)
-    const btnCrossover = document.getElementById('btn-start-crossover');
-    if (btnCrossover) {
-        btnCrossover.onclick = () => {
-            switchScreenView('view-quest');
-            startQuestSession(Math.floor(1 + Math.random() * 5), () => {
-                switchScreenView('view-lobby');
-            });
-        };
-    }
+    window.toggleGameSound = function() {
+        const btnSound = document.getElementById('btn-sound-toggle');
+        const isOn = btnSound.textContent === '🔊';
+        if (btnSound) btnSound.textContent = isOn ? '🎵' : '🔊';
+        alert(isOn ? '🔇 모험 배경음악이 꺼졌습니다.' : '🔊 모험 배경음악이 켜졌습니다.');
+    };
 
     // 서바이벌 명예의 전당 렌더링
     function renderSurvivalHallRankings() {
@@ -215,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = '';
 
         if (rankings.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5">아직 서바이벌 기록이 없습니다. 지금 도전해 보세요!</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5">아직 반말 몬스터 던전 기록이 없습니다. 지금 도전해 보세요!</td></tr>';
             return;
         }
 
@@ -232,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // AI 맞춤 오답노트 탭 렌더링
+    // AI 오답노트 탭 렌더링
     function renderAINotesTab() {
         const container = document.getElementById('ai-notes-container');
         if (!container) return;
@@ -264,13 +217,26 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    const btnSound = document.getElementById('btn-sound-toggle');
-    let soundOn = false;
-    if (btnSound) {
-        btnSound.onclick = () => {
-            soundOn = !soundOn;
-            btnSound.textContent = soundOn ? '🔊' : '🎵';
-            alert(soundOn ? '🔊 모험 배경음악이 켜졌습니다.' : '🔇 모험 배경음악이 꺼졌습니다.');
+    // 제작자 템플릿 저장 버튼
+    const btnSaveCreator = document.getElementById('btn-save-creator-data');
+    if (btnSaveCreator) {
+        btnSaveCreator.onclick = () => {
+            const creatorWorldSelect = document.getElementById('creator-target-world');
+            const creatorPromptText = document.getElementById('creator-prompt-template');
+            if (creatorWorldSelect && creatorPromptText) {
+                const wId = creatorWorldSelect.value;
+                const text = creatorPromptText.value;
+                saveCreatorPrompt(wId, text);
+                alert(`💾 ${wId}월드의 표준 교과 프롬프트 템플릿이 Firebase DB 및 로컬에 안전하게 저장되었습니다!`);
+                const modal = document.getElementById('modal-creator-master');
+                if (modal) modal.classList.add('hidden');
+            }
         };
     }
+
+    // 인증 시스템 초기화 및 로그인 성공 콜백
+    initAuthSystem({
+        onUserLoginSuccess: handleLoginSuccess,
+        onLogout: () => switchScreenView('view-login')
+    });
 });
