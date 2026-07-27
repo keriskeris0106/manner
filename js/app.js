@@ -1,13 +1,12 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 애플리케이션 진입점 & 라우터 컨트롤러 (app.js)
+   🎮 [존댓말 차원 탐험대] 메인 앱 컨트롤러 & 100% 이벤트/화면 보장 (app.js)
    ========================================================================== */
 
-import { initAuthSystem } from './auth.js';
+import { initAuthSystem, switchScreenView } from './auth.js';
 import { renderBadgeGrid, updateWorldBadgeStatus, calculateTitle } from './badge-system.js';
 import { startQuestSession } from './game-quest.js';
 import { startSurvivalGame } from './game-survival.js';
 import { initTeacherDashboard } from './teacher-dashboard.js';
-import { initSuperAdminPage } from './super-admin.js';
 import { 
     getLeaderboardRankings, 
     getCurrentUserSession, 
@@ -18,59 +17,81 @@ import {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("🌌 존댓말 차원 탐험대 v2.0 가동!");
 
-    function showView(viewId) {
-        document.querySelectorAll('.view-screen').forEach(s => s.classList.add('hidden'));
-        const targetView = document.getElementById(viewId);
-        if (targetView) targetView.classList.remove('hidden');
-
-        const gnb = document.getElementById('gnb');
-        if (viewId === 'view-login') gnb.classList.add('hidden');
-        else gnb.classList.remove('hidden');
-    }
-
     function handleLoginSuccess(user) {
         const userDisplayName = document.getElementById('user-display-name');
         const userTitleDisplay = document.getElementById('user-title-display');
         const lobbyUserName = document.getElementById('lobby-user-name');
         const lobbyUserClass = document.getElementById('lobby-user-class');
         const lobbyUserTitle = document.getElementById('lobby-user-title');
+        const btnTeacherManage = document.getElementById('btn-teacher-manage');
+        const dashClassTitle = document.getElementById('dash-class-title');
+        const dashCodeNum = document.getElementById('dash-code-num');
+
+        const classCode = user.classCode || '363636';
 
         if (user.role === 'teacher') {
-            showView('view-teacher-dashboard');
-            initTeacherDashboard();
+            // 교사도 동일한 게임 로비로 입장!
+            if (btnTeacherManage) btnTeacherManage.classList.remove('hidden');
+            if (userDisplayName) userDisplayName.textContent = `${user.name || '선생님'} (교사)`;
+            if (lobbyUserName) lobbyUserName.textContent = `${user.name || '선생님'}`;
+            if (lobbyUserClass) lobbyUserClass.textContent = `${user.className || '학급'} (코드: ${classCode})`;
+            if (dashClassTitle) dashClassTitle.textContent = `${user.className || '우리 반'}`;
+            if (dashCodeNum) dashCodeNum.textContent = classCode;
+
+            switchScreenView('view-lobby');
         } else {
+            // 학생 로그인
+            if (btnTeacherManage) btnTeacherManage.classList.add('hidden');
             const earned = user.earnedBadges || [];
             const title = calculateTitle(earned.length);
 
             if (userDisplayName) userDisplayName.textContent = `${user.name} (${user.grade}학년 ${user.classNum}반)`;
             if (userTitleDisplay) userTitleDisplay.textContent = title;
             if (lobbyUserName) lobbyUserName.textContent = user.name;
-            if (lobbyUserClass) lobbyUserClass.textContent = `${user.grade}학년 ${user.classNum}반 (${user.classCode})`;
+            if (lobbyUserClass) lobbyUserClass.textContent = `${user.grade}학년 ${user.classNum}반 (코드: ${classCode})`;
             if (lobbyUserTitle) lobbyUserTitle.textContent = title;
 
             renderBadgeGrid(earned);
             updateWorldBadgeStatus(earned);
-            showView('view-lobby');
+            switchScreenView('view-lobby');
         }
     }
 
+    // 인증 시스템 초기화 및 자동 로그인
     initAuthSystem({
         onUserLoginSuccess: handleLoginSuccess,
-        onLogout: () => showView('view-login')
+        onLogout: () => switchScreenView('view-login')
     });
 
-    // 8번: 레벨/칭호 클릭 시 전체 레벨 및 필요 배지 조건 팝업 표시!
+    // [👩‍🏫 학생 관리] 버튼 클릭 시 교사 대시보드 팝업/화면 노출
+    const btnTeacherManage = document.getElementById('btn-teacher-manage');
+    if (btnTeacherManage) {
+        btnTeacherManage.onclick = () => {
+            switchScreenView('view-teacher-dashboard');
+            initTeacherDashboard();
+        };
+    }
+
+    // 교사 대시보드내 [🏠 게임 로비로 돌아가기] 버튼
+    const btnCloseDashView = document.getElementById('btn-close-dash-view');
+    if (btnCloseDashView) {
+        btnCloseDashView.onclick = () => {
+            switchScreenView('view-lobby');
+        };
+    }
+
+    // 레벨/칭호 가이드 팝업
     const btnTitleDisplay = document.getElementById('user-title-display');
     const btnLobbyTitle = document.getElementById('lobby-user-title');
     const modalLevel = document.getElementById('modal-level-guide');
     const btnCloseLevel = document.getElementById('btn-close-level-modal');
 
-    const openLevelModal = () => modalLevel.classList.remove('hidden');
+    const openLevelModal = () => { if (modalLevel) modalLevel.classList.remove('hidden'); };
     if (btnTitleDisplay) btnTitleDisplay.onclick = openLevelModal;
     if (btnLobbyTitle) btnLobbyTitle.onclick = openLevelModal;
     if (btnCloseLevel) btnCloseLevel.onclick = () => modalLevel.classList.add('hidden');
 
-    // 5번: 제작자 마스터 모드 (암호 코드: 0106 또는 creator)
+    // 제작자 마스터 모드 (암호: 0106)
     const btnCreatorMode = document.getElementById('btn-creator-mode');
     const modalCreator = document.getElementById('modal-creator-master');
     const btnCloseCreator = document.getElementById('btn-close-creator-modal');
@@ -107,10 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (btnCloseCreator) btnCloseCreator.onclick = () => modalCreator.classList.add('hidden');
 
-    // 모드 탭 전환
+    // 모드 탭 전환 (스토리, 서바이벌, AI 오답노트)
     const modeTabs = document.querySelectorAll('.mode-tab');
     modeTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
+        tab.onclick = () => {
             modeTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
@@ -124,17 +145,23 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (tabTarget === 'ai-notes') {
                 renderAINotesTab();
             }
-        });
+        };
     });
 
-    // 5개 월드 카드 클릭 이벤트
+    // 월드 카드 5개 및 세부 장소 진입 클릭 바인딩
     document.querySelectorAll('.world-card').forEach(card => {
         const btn = card.querySelector('.btn-enter-world');
         const worldId = parseInt(card.getAttribute('data-world'));
 
         if (btn) {
-            btn.onclick = () => {
-                showView('view-quest');
+            btn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (card.classList.contains('locked')) {
+                    alert('🔒 이전 월드의 10개 배지를 모두 모아야 다음 월드가 해금됩니다!');
+                    return;
+                }
+                switchScreenView('view-quest');
                 startQuestSession(worldId, (newBadges) => {
                     const curr = getCurrentUserSession();
                     if (curr) handleLoginSuccess(curr);
@@ -144,36 +171,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // [⬅️ 월드 지도로] 버튼
-    document.getElementById('btn-exit-quest').onclick = () => {
-        if (confirm("🎮 월드 지도로 돌아가시겠습니까?")) {
-            showView('view-lobby');
-        }
-    };
+    const btnExitQuest = document.getElementById('btn-exit-quest');
+    if (btnExitQuest) {
+        btnExitQuest.onclick = () => {
+            if (confirm("🎮 월드 지도로 돌아가시겠습니까?")) {
+                switchScreenView('view-lobby');
+            }
+        };
+    }
 
-    // 10번: 바른말 수호대 시작 버튼 (홈으로 이탈 콜백 연동)
-    document.getElementById('btn-start-survival').onclick = () => {
-        showView('view-survival');
-        startSurvivalGame(
-            () => {
-                showView('view-lobby');
-                document.querySelector('[data-tab="survival"]').click();
-            },
-            () => showView('view-lobby') // 🏠 로비로 이탈 콜백
-        );
-    };
+    // 바른말 수호대 시작 버튼
+    const btnStartSurvival = document.getElementById('btn-start-survival');
+    if (btnStartSurvival) {
+        btnStartSurvival.onclick = () => {
+            switchScreenView('view-survival');
+            startSurvivalGame(
+                () => {
+                    switchScreenView('view-lobby');
+                    const tabSurv = document.querySelector('[data-tab="survival"]');
+                    if (tabSurv) tabSurv.click();
+                },
+                () => switchScreenView('view-lobby')
+            );
+        };
+    }
 
-    // 9번: 차원 대통합 무한 모드 (6번째 카드)
+    // 차원 대통합 무한 모드 (6번째 카드)
     const btnCrossover = document.getElementById('btn-start-crossover');
     if (btnCrossover) {
         btnCrossover.onclick = () => {
-            showView('view-quest');
+            switchScreenView('view-quest');
             startQuestSession(Math.floor(1 + Math.random() * 5), () => {
-                showView('view-lobby');
+                switchScreenView('view-lobby');
             });
         };
     }
 
-    // 12번: 서바이벌 탭 내 명예의 전당 렌더링
+    // 서바이벌 명예의 전당 렌더링
     function renderSurvivalHallRankings() {
         const tbody = document.getElementById('survival-hall-tbody');
         if (!tbody) return;
@@ -198,13 +232,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 13번: AI 맞춤 오답노트 탭 렌더링
+    // AI 맞춤 오답노트 탭 렌더링
     function renderAINotesTab() {
         const container = document.getElementById('ai-notes-container');
         if (!container) return;
 
         const curr = getCurrentUserSession();
-        const stats = (curr && curr.errorStats) ? curr.errorStats : { OBJECT_HONORIFIC: 1, APJON: 1, SPECIAL_WORD: 1, SUBJECT_OBJECT: 1 };
+        const stats = (curr && curr.errorStats) ? curr.errorStats : { OBJECT_HONORIFIC: 0, APJON: 0, SPECIAL_WORD: 0, SUBJECT_OBJECT: 0 };
 
         container.innerHTML = `
             <div class="ai-note-card">

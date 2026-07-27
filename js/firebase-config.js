@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] Firebase Configuration & Shielded Auth (firebase-config.js)
+   🎮 [존댓말 차원 탐험대] Firebase Configuration & 6-Digit Class Code Service (firebase-config.js)
    ========================================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -54,78 +54,93 @@ const LOCAL_STORAGE_KEY_STUDENTS = "manner_explorer_students";
 const LOCAL_STORAGE_KEY_RANKING = "manner_explorer_ranking";
 const LOCAL_STORAGE_KEY_CREATOR_PROMPT = "manner_explorer_creator_prompt";
 
+// 자동 로그인 세션 유지 (localStorage)
 export function getCurrentUserSession() {
     try {
-        const saved = sessionStorage.getItem(LOCAL_STORAGE_KEY_USER) || localStorage.getItem(LOCAL_STORAGE_KEY_USER);
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY_USER) || sessionStorage.getItem(LOCAL_STORAGE_KEY_USER);
         return saved ? JSON.parse(saved) : null;
     } catch (e) { return null; }
 }
 
 export function saveUserSession(userData) {
     try {
+        localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(userData));
         sessionStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(userData));
     } catch (e) {}
 }
 
 export function clearUserSession() {
     try {
-        sessionStorage.removeItem(LOCAL_STORAGE_KEY_USER);
         localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
+        sessionStorage.removeItem(LOCAL_STORAGE_KEY_USER);
     } catch (e) {}
 }
 
+// 6자리 학급 코드 유효성 & 중복 체크 (로컬 + 파이어베이스 통틀어 정밀 검사)
 export async function validateClassCode(code) {
     if (!code) return false;
     const cleanCode = code.trim().toUpperCase();
 
-    if (cleanCode === 'EXP123' || cleanCode === 'DEMO123' || cleanCode === 'TEACHER') {
+    if (cleanCode === '363636' || cleanCode === '123456') {
         return true;
     }
 
     try {
-        const teachers = await getAllTeachers();
-        if (Array.isArray(teachers)) {
-            const found = teachers.find(t => t.classCode && t.classCode.toUpperCase() === cleanCode);
-            if (found) return true;
-        }
-    } catch (e) {}
-
-    try {
         const localTeachers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
-        const foundLocal = localTeachers.find(t => t.classCode && t.classCode.toUpperCase() === cleanCode);
+        const foundLocal = localTeachers.find(t => t.classCode && t.classCode.toString().toUpperCase() === cleanCode);
         if (foundLocal) return true;
     } catch (e) {}
+
+    if (isFirebaseAvailable && db) {
+        try {
+            const querySnapshot = await getDocs(collection(db, "teachers"));
+            let foundInDb = false;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data && data.classCode && data.classCode.toString().toUpperCase() === cleanCode) {
+                    foundInDb = true;
+                }
+            });
+            if (foundInDb) return true;
+        } catch (e) {}
+    }
 
     return false;
 }
 
 export async function registerTeacherPending(teacherData) {
+    try {
+        const teachers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
+        const existingIdx = teachers.findIndex(t => t.classCode === teacherData.classCode || t.uid === teacherData.uid);
+        if (existingIdx >= 0) teachers[existingIdx] = teacherData;
+        else teachers.push(teacherData);
+        localStorage.setItem(LOCAL_STORAGE_KEY_TEACHERS, JSON.stringify(teachers));
+    } catch (e) {}
+
     if (isFirebaseAvailable && db) {
         try {
             await setDoc(doc(db, "teachers", teacherData.uid), teacherData);
         } catch (err) { console.warn(err); }
     }
-    try {
-        const teachers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
-        const existingIdx = teachers.findIndex(t => t.uid === teacherData.uid);
-        if (existingIdx >= 0) teachers[existingIdx] = teacherData;
-        else teachers.push(teacherData);
-        localStorage.setItem(LOCAL_STORAGE_KEY_TEACHERS, JSON.stringify(teachers));
-    } catch (e) {}
 }
 
 export async function getAllTeachers() {
     let list = [];
+    try {
+        list = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
+    } catch (e) {}
+
     if (isFirebaseAvailable && db) {
         try {
             const querySnapshot = await getDocs(collection(db, "teachers"));
             querySnapshot.forEach((doc) => list.push(doc.data()));
-            if (list.length > 0) return list;
-        } catch (e) { console.warn(e); }
+        } catch (e) {}
     }
-    try {
-        return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
-    } catch (e) { return []; }
+
+    // 중복 제거
+    const map = new Map();
+    list.forEach(t => map.set(t.classCode || t.uid, t));
+    return Array.from(map.values());
 }
 
 export async function loginOrRegisterStudent(studentInfo) {
@@ -144,12 +159,6 @@ export async function loginOrRegisterStudent(studentInfo) {
         wrongLogs: studentInfo.wrongLogs || []
     };
 
-    if (isFirebaseAvailable && db) {
-        try {
-            await setDoc(doc(db, "students", studentId), studentRecord, { merge: true });
-        } catch (e) { console.warn(e); }
-    }
-
     try {
         const students = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_STUDENTS) || "[]");
         const idx = students.findIndex(s => s.studentId === studentId);
@@ -164,6 +173,12 @@ export async function loginOrRegisterStudent(studentInfo) {
         }
         localStorage.setItem(LOCAL_STORAGE_KEY_STUDENTS, JSON.stringify(students));
     } catch (e) {}
+
+    if (isFirebaseAvailable && db) {
+        try {
+            await setDoc(doc(db, "students", studentId), studentRecord, { merge: true });
+        } catch (e) {}
+    }
     
     saveUserSession(studentRecord);
     return studentRecord;
@@ -205,13 +220,27 @@ export async function updateStudentProgress(studentId, newBadges, errorType, wro
 }
 
 export async function getStudentsByClassCode(classCode) {
+    let list = [];
     try {
         const students = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_STUDENTS) || "[]");
-        return students.filter(s => s.classCode === classCode || !classCode);
-    } catch (e) { return []; }
+        list = students.filter(s => s.classCode === classCode || !classCode);
+    } catch (e) {}
+
+    if (isFirebaseAvailable && db) {
+        try {
+            const querySnapshot = await getDocs(collection(db, "students"));
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.classCode === classCode && !list.find(s => s.studentId === data.studentId)) {
+                    list.push(data);
+                }
+            });
+        } catch (e) {}
+    }
+    return list;
 }
 
-export function saveLeaderboardScore(entry) {
+export async function saveLeaderboardScore(entry) {
     try {
         const rankings = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_RANKING) || "[]");
         rankings.push(entry);

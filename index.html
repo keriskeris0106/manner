@@ -30,6 +30,8 @@
                 </div>
             </div>
             <div class="gnb-right">
+                <!-- 3번: 교사인 경우에만 보이는 '학생 관리' 버튼 -->
+                <button id="btn-teacher-manage" class="btn-pixel btn-success btn-compact hidden" type="button">👩‍🏫 학생 관리</button>
                 <button id="btn-creator-mode" class="btn-pixel btn-warning btn-compact" type="button" title="제작자 전용 시나리오/프롬프트 템플릿 관리">🛠️ 제작자 마스터</button>
                 <button id="btn-sound-toggle" class="btn-pixel btn-icon" type="button" title="음악 켜기/끄기">🎵</button>
                 <button id="btn-logout" class="btn-pixel btn-danger btn-compact" type="button">게임 종료 ✖</button>
@@ -105,7 +107,7 @@
                         </button>
                     </form>
 
-                    <!-- 교사 로그인 & 6자리 학급 코드 입력 폼 -->
+                    <!-- 교사 로그인 폼 -->
                     <div id="box-teacher-login" class="login-form-box" style="display: none;">
                         <form id="form-teacher-login-direct" onsubmit="if(window.handleTeacherDirectLogin) window.handleTeacherDirectLogin(event); return false;">
                             <div class="input-group">
@@ -113,7 +115,7 @@
                                 <input type="text" id="teacher-code-login" placeholder="예: 363636" maxlength="6" pattern="[0-9]*" inputmode="numeric" required autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                             </div>
                             <button type="submit" class="btn-pixel btn-primary btn-block btn-lg" style="margin-bottom: 12px;">
-                                🔑 기존 학급 로그인 (대시보드 진입)
+                                🔑 기존 학급 로그인 (게임 및 운영)
                             </button>
                             <button type="button" class="btn-pixel btn-success btn-block btn-lg" onclick="if(window.openTeacherCreateModal) window.openTeacherCreateModal();">
                                 ✨ 신규 클래스 생성하기
@@ -123,14 +125,14 @@
                 </div>
             </section>
 
-            <!-- [화면 2] 로비 -->
+            <!-- [화면 2] 게임 로비 (교사와 학생 모두 동일하게 이용!) -->
             <section id="view-lobby" class="view-screen hidden">
                 <div class="lobby-layout">
                     <aside class="lobby-sidebar pixel-box">
                         <div class="profile-card">
                             <div class="avatar-box">🧙‍♂️</div>
                             <h2 id="lobby-user-name">홍길동</h2>
-                            <p id="lobby-user-class">3학년 1반 (클래스: 탐험대)</p>
+                            <p id="lobby-user-class">3학년 1반 (클래스: 363636)</p>
                             <button class="title-badge-large clickable" id="lobby-user-title" type="button">🌱 새싹 탐험대 (Lv.1)</button>
                         </div>
                         <hr class="pixel-hr">
@@ -306,13 +308,14 @@
                 </div>
             </section>
 
-            <!-- [화면 5] 교사 대시보드 -->
+            <!-- [화면 5] 교사 대시보드 (학생 관리 팝업/모달로 100% 호출) -->
             <section id="view-teacher-dashboard" class="view-screen hidden">
                 <div class="dashboard-container pixel-box">
                     <div class="dashboard-header">
                         <h2>👩‍🏫 교사 관리자 대시보드 - <span id="dash-class-title">3학년 긍정열정반</span></h2>
                         <div class="dashboard-top-actions">
                             <span id="dash-invite-code" class="invite-code-pill">학급 초대 코드: <strong id="dash-code-num">363636</strong></span>
+                            <button id="btn-close-dash-view" class="btn-pixel btn-warning" type="button">🏠 게임 로비로 돌아가기</button>
                             <button id="btn-print-report" class="btn-pixel btn-primary" type="button">🖨️ 학급 진단 리포트 인쇄/PDF</button>
                         </div>
                     </div>
@@ -325,7 +328,7 @@
                     <div id="dashtab-students" class="dashtab-panel active">
                         <div class="dashboard-grid">
                             <div class="student-list-box">
-                                <h3>학생 목록 (총 <span id="dash-student-count">0</span>명)</h3>
+                                <h3>실시간 학생 목록 (총 <span id="dash-student-count">0</span>명)</h3>
                                 <ul id="student-ul-list" class="student-ul-list"></ul>
                             </div>
                             <div class="student-detail-box">
@@ -381,7 +384,7 @@
 
         </main>
 
-        <!-- 모달 팝업 1: 신규 클래스 생성 모달 (6자리 숫자 코드 중복 체크) -->
+        <!-- 신규 클래스 생성 모달 -->
         <div id="modal-teacher-create-class" class="modal-overlay hidden">
             <div class="modal-box pixel-box">
                 <h2>✨ 신규 클래스 생성</h2>
