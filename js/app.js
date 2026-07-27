@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 철통 전역 이벤트 컨트롤러 (app.js)
+   🎮 [존댓말 차원 탐험대] 철통 100% 무결점 컨트롤러 (app.js)
    ========================================================================== */
 
 import { initAuthSystem, switchScreenView } from './auth.js';
@@ -16,7 +16,7 @@ import {
 } from './firebase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🌌 존댓말 차원 탐험대 v2.0 철통 가동!");
+    console.log("🌌 존댓말 차원 탐험대 v2.0 철통 관통 가동!");
 
     function handleLoginSuccess(user) {
         if (!user) return;
@@ -35,9 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = calculateTitle(earned.length);
 
         if (user.role === 'teacher') {
-            // 교사 계정 로그인 시 명확한 교사 정보 렌더링
+            // 교사 계정 로그인 시 명확한 교사 프로필 표출
             if (btnTeacherManage) btnTeacherManage.classList.remove('hidden');
-            if (userDisplayName) userDisplayName.textContent = `👩‍🏫 ${user.name || '선생님'} (${user.className || '교사'})`;
+            if (userDisplayName) userDisplayName.textContent = `👩‍🏫 ${user.name || '선생님'} (교사)`;
             if (userTitleDisplay) userTitleDisplay.textContent = '👑 학급 관리자';
             if (lobbyUserName) lobbyUserName.textContent = `👩‍🏫 ${user.name || '선생님'}`;
             if (lobbyUserClass) lobbyUserClass.textContent = `${user.className || '학급'} (초대코드: ${classCode})`;
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         switchScreenView('view-lobby');
     }
 
-    // 전역 글로벌 클릭 이벤트 핸들러 등록 (HTML 인라인 100% 호환!)
+    // 100% 무조건 클릭 관통 전역 바인딩
     window.enterWorldQuest = function(worldId) {
         const curr = getCurrentUserSession();
         const earned = (curr && curr.earnedBadges) ? curr.earnedBadges : [];
@@ -97,9 +97,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
         if (btnEl) btnEl.classList.add('active');
 
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.tab-panel').forEach(p => {
+            p.classList.add('hidden');
+            p.style.display = 'none';
+        });
         const activePanel = document.getElementById(`tab-content-${tabTarget}`);
-        if (activePanel) activePanel.classList.remove('hidden');
+        if (activePanel) {
+            activePanel.classList.remove('hidden');
+            activePanel.style.display = 'block';
+        }
 
         if (tabTarget === 'survival') {
             renderSurvivalHallRankings();
@@ -128,14 +134,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openLevelGuideModal = function() {
         const modal = document.getElementById('modal-level-guide');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+        }
     };
 
     window.openCreatorMaster = function() {
         const modal = document.getElementById('modal-creator-master');
         const code = prompt("🛠️ 제작자 마스터 암호 코드를 입력하세요:");
         if (code === '0106' || code === 'creator' || code === 'keris') {
-            if (modal) modal.classList.remove('hidden');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+            }
             const creatorWorldSelect = document.getElementById('creator-target-world');
             const creatorPromptText = document.getElementById('creator-prompt-template');
             if (creatorWorldSelect && creatorPromptText) {
@@ -155,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.toggleGameSound = function() {
         const btnSound = document.getElementById('btn-sound-toggle');
-        const isOn = btnSound.textContent === '🔊';
+        const isOn = btnSound ? btnSound.textContent === '🔊' : false;
         if (btnSound) btnSound.textContent = isOn ? '🎵' : '🔊';
         alert(isOn ? '🔇 모험 배경음악이 꺼졌습니다.' : '🔊 모험 배경음악이 켜졌습니다.');
     };
@@ -229,7 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveCreatorPrompt(wId, text);
                 alert(`💾 ${wId}월드의 표준 교과 프롬프트 템플릿이 Firebase DB 및 로컬에 안전하게 저장되었습니다!`);
                 const modal = document.getElementById('modal-creator-master');
-                if (modal) modal.classList.add('hidden');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                }
             }
         };
     }

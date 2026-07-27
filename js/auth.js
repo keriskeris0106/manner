@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 실시간 6자리 코드 중복검사 & 학년/반 100% 검증 (auth.js)
+   🎮 [존댓말 차원 탐험대] 철통 100% 화면 전환 & 클릭 관통 인증 (auth.js)
    ========================================================================== */
 
 import { 
@@ -15,6 +15,12 @@ import {
 let onLoginSuccessCallback = null;
 
 export function switchScreenView(viewId) {
+    // 숨겨진 모든 모달 팝업 가리기
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.classList.add('hidden');
+        m.style.display = 'none';
+    });
+
     const screens = document.querySelectorAll('.view-screen');
     screens.forEach(s => {
         s.classList.add('hidden');
@@ -66,10 +72,12 @@ window.openTeacherCreateModal = function() {
     const msg = document.getElementById('code-duplicate-msg');
     if (input) input.value = '';
     if (msg) { msg.textContent = ''; msg.className = ''; }
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
 };
 
-// 1번 요구사항: 6자리 코드 실시간 중복 체크 (빨간색/초록색 텍스트 표출)
 window.handleRealtimeCodeCheck = async function(inputEl) {
     const code = inputEl.value.trim().replace(/[^0-9]/g, '');
     inputEl.value = code;
@@ -87,7 +95,7 @@ window.handleRealtimeCodeCheck = async function(inputEl) {
 
     const isUsed = await validateClassCode(code);
     if (isUsed) {
-        msgEl.textContent = `⚠️ 이미 사용 중인 6자리 클래스 코드입니다. 다른 숫자를 입력해 주세요.`;
+        msgEl.textContent = `⚠️ 이미 사용 중인 6자리 클래스 코드입니다.`;
         msgEl.style.color = "#ef476f";
         if (submitBtn) submitBtn.disabled = true;
     } else {
@@ -97,7 +105,6 @@ window.handleRealtimeCodeCheck = async function(inputEl) {
     }
 };
 
-// 2번 요구사항: 학년, 반, 6자리 학급 코드가 100% 일치해야만 학생 로그인 가능!
 window.handleStudentLoginSubmit = async function(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
 
@@ -119,7 +126,6 @@ window.handleStudentLoginSubmit = async function(e) {
     }
 
     const teachers = await getAllTeachers();
-    // 학년, 반, 6자리 학급 코드 삼박자 100% 모두 일치하는 교사 클래스 검색
     const matchedTeacher = teachers.find(t => 
         t.classCode === classCode && 
         t.grade.toString() === grade.toString() && 
@@ -146,7 +152,6 @@ window.handleStudentLoginSubmit = async function(e) {
     return false;
 };
 
-// 3. 교사 기존 학급 6자리 코드로 접속
 window.handleTeacherDirectLogin = async function(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
 
@@ -162,8 +167,9 @@ window.handleTeacherDirectLogin = async function(e) {
     const foundTeacher = teachers.find(t => t.classCode === code);
 
     if (foundTeacher) {
+        foundTeacher.role = 'teacher';
         saveUserSession(foundTeacher);
-        alert(`✨ ${foundTeacher.name || '선생님'} 환영합니다!\n[ ${foundTeacher.className} (코드: ${code}) ] 게임 및 학급 관리를 시작합니다.`);
+        alert(`✨ ${foundTeacher.name || '선생님'} 환영합니다!\n[ ${foundTeacher.className} (코드: ${code}) ] 학급 모험 및 학생 관리를 시작합니다.`);
         switchScreenView('view-lobby');
         if (onLoginSuccessCallback) onLoginSuccessCallback(foundTeacher);
         return false;
@@ -180,7 +186,7 @@ window.handleTeacherDirectLogin = async function(e) {
             role: 'teacher'
         };
         saveUserSession(defaultTeacher);
-        alert(`✨ 학급 게임 및 관리를 시작합니다.`);
+        alert(`✨ 학급 모험 및 관리를 시작합니다.`);
         switchScreenView('view-lobby');
         if (onLoginSuccessCallback) onLoginSuccessCallback(defaultTeacher);
         return false;
@@ -190,7 +196,6 @@ window.handleTeacherDirectLogin = async function(e) {
     return false;
 };
 
-// 4. 신규 클래스 생성 제출
 window.handleTeacherCreateSubmit = async function(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
 
@@ -227,7 +232,10 @@ window.handleTeacherCreateSubmit = async function(e) {
     saveUserSession(teacherData);
 
     const modal = document.getElementById('modal-teacher-create-class');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
 
     alert(`✨ 신규 클래스 생성 완료!\n선생님의 6자리 학급 코드: [ ${newCode} ] (${grade}학년 ${classNum}반)\n학생들에게 알려주세요! 게임 로비로 진입합니다.`);
     switchScreenView('view-lobby');
