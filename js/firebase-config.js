@@ -1,98 +1,91 @@
 /* ==========================================================================
    🎮 [존댓말 차원 탐험대] Firebase Configuration & DB Service (firebase-config.js)
+   ==========================================================================
+   🔒 개인정보 및 하드코딩된 API 키/비밀번호 제로(0) 정책 적용
    ========================================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
     getAuth, 
-    GoogleAuthProvider, 
-    signInWithPopup, 
-    signOut, 
-    onAuthStateChanged 
+    GoogleAuthProvider 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
     getFirestore, 
     doc, 
     setDoc, 
-    getDoc, 
-    collection, 
-    query, 
-    where, 
     getDocs, 
-    updateDoc, 
-    arrayUnion 
+    collection, 
+    updateDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 import { getEnv } from './env.js';
 
-// Vercel / 환경 변수 주입 로직 적용
+// 1. 소스 코드 내 하드코딩된 API 키 및 계정 정보를 완전히 제거하고 환경변수로만 동작
 const firebaseConfig = {
-    apiKey: getEnv("FIREBASE_API_KEY", "AIzaSyDemoKeyForMannerDimensionExplorer2026"),
-    authDomain: getEnv("FIREBASE_AUTH_DOMAIN", "manner-explorer.firebaseapp.com"),
-    projectId: getEnv("FIREBASE_PROJECT_ID", "manner-explorer"),
-    storageBucket: getEnv("FIREBASE_STORAGE_BUCKET", "manner-explorer.appspot.com"),
-    messagingSenderId: getEnv("FIREBASE_MESSAGING_SENDER_ID", "123456789012"),
-    appId: getEnv("FIREBASE_APP_ID", "1:123456789012:web:demo123456")
+    apiKey: getEnv("FIREBASE_API_KEY"),
+    authDomain: getEnv("FIREBASE_AUTH_DOMAIN"),
+    projectId: getEnv("FIREBASE_PROJECT_ID"),
+    storageBucket: getEnv("FIREBASE_STORAGE_BUCKET"),
+    messagingSenderId: getEnv("FIREBASE_MESSAGING_SENDER_ID"),
+    appId: getEnv("FIREBASE_APP_ID")
 };
 
-// Initialize Firebase
 let app, auth, db, googleProvider;
 let isFirebaseAvailable = false;
 
-try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    googleProvider = new GoogleAuthProvider();
-    isFirebaseAvailable = true;
-    console.log("🔥 Firebase initialized with Environment Variables.");
-} catch (e) {
-    console.warn("⚠️ Firebase fallback mode initialized (Local Store active):", e);
+// Firebase 키가 환경 변수로 정상 제공될 때만 초기화
+if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        googleProvider = new GoogleAuthProvider();
+        isFirebaseAvailable = true;
+    } catch (e) {
+        console.warn("Firebase Init Shield:", e);
+    }
 }
 
 export { auth, db, googleProvider, isFirebaseAvailable };
 
 // ==========================================================================
-// 8단계 세션 및 Firestore 데이터 조작 래퍼 함수 (Local Fallback 지원)
+// 🔒 개인정보 수집 없는 로컬 세션 처리 (외부 수집 제로 정책)
 // ==========================================================================
 
 const LOCAL_STORAGE_KEY_USER = "manner_explorer_current_user";
 const LOCAL_STORAGE_KEY_TEACHERS = "manner_explorer_teachers";
 const LOCAL_STORAGE_KEY_STUDENTS = "manner_explorer_students";
-const LOCAL_STORAGE_KEY_LOGS = "manner_explorer_logs";
 const LOCAL_STORAGE_KEY_RANKING = "manner_explorer_ranking";
 
-// 1. 현재 세션 유저 가져오기/저장하기
 export function getCurrentUserSession() {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY_USER);
+    const saved = sessionStorage.getItem(LOCAL_STORAGE_KEY_USER) || localStorage.getItem(LOCAL_STORAGE_KEY_USER);
     return saved ? JSON.parse(saved) : null;
 }
 
 export function saveUserSession(userData) {
-    localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(userData));
+    sessionStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(userData));
 }
 
 export function clearUserSession() {
+    sessionStorage.removeItem(LOCAL_STORAGE_KEY_USER);
     localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
 }
 
-// 2. 최종 관리자 여부 확인 (개발자 Google ID)
-export const SUPER_ADMIN_EMAIL = "keriskeris0106@gmail.com"; // 개발자 구글 ID
-
+// 최종 관리자 이메일도 코드에 하드코딩하지 않고 환경 변수 참조
 export function checkIsSuperAdmin(email) {
-    return email === SUPER_ADMIN_EMAIL || email.includes("keriskeris0106");
+    const adminEmail = getEnv("SUPER_ADMIN_EMAIL");
+    if (!adminEmail) return false;
+    return email === adminEmail;
 }
 
-// 3. 교사가입 신청 및 저장
 export async function registerTeacherPending(teacherData) {
     if (isFirebaseAvailable) {
         try {
             await setDoc(doc(db, "teachers", teacherData.uid), teacherData);
         } catch (err) {
-            console.warn("Firestore error fallback to localStorage:", err);
+            console.warn(err);
         }
     }
-    // Local fallback
     const teachers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
     const existingIdx = teachers.findIndex(t => t.uid === teacherData.uid);
     if (existingIdx >= 0) teachers[existingIdx] = teacherData;
@@ -100,7 +93,6 @@ export async function registerTeacherPending(teacherData) {
     localStorage.setItem(LOCAL_STORAGE_KEY_TEACHERS, JSON.stringify(teachers));
 }
 
-// 4. 모든 교사 가입 신청 가져오기 (Super Admin용)
 export async function getAllTeachers() {
     let list = [];
     if (isFirebaseAvailable) {
@@ -113,7 +105,6 @@ export async function getAllTeachers() {
     return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_TEACHERS) || "[]");
 }
 
-// 5. 교사 승인/거절 상태 업데이트 (Super Admin용)
 export async function updateTeacherStatus(uid, status) {
     if (isFirebaseAvailable) {
         try {
@@ -128,12 +119,14 @@ export async function updateTeacherStatus(uid, status) {
     }
 }
 
-// 6. 학생 등록 및 로그인
 export async function loginOrRegisterStudent(studentInfo) {
-    const studentId = `${studentInfo.classCode}_${studentInfo.grade}_${studentInfo.classNum}_${studentInfo.name}`;
+    const studentId = `STU_${studentInfo.classCode}_${studentInfo.grade}_${studentInfo.classNum}_${studentInfo.name}`;
     const studentRecord = {
         studentId,
-        ...studentInfo,
+        classCode: studentInfo.classCode,
+        grade: studentInfo.grade,
+        classNum: studentInfo.classNum,
+        name: studentInfo.name,
         role: 'student',
         lastLoginAt: new Date().toISOString(),
         earnedBadges: studentInfo.earnedBadges || [],
@@ -164,7 +157,6 @@ export async function loginOrRegisterStudent(studentInfo) {
     return studentRecord;
 }
 
-// 7. 학생 학습 이력 및 오류 로그 업데이트
 export async function updateStudentProgress(studentId, newBadges, errorType, wrongLogItem = null) {
     const students = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_STUDENTS) || "[]");
     const student = students.find(s => s.studentId === studentId);
@@ -198,13 +190,11 @@ export async function updateStudentProgress(studentId, newBadges, errorType, wro
     }
 }
 
-// 8. 학급 학생 전체 목록 불러오기 (교사용)
 export async function getStudentsByClassCode(classCode) {
     const students = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_STUDENTS) || "[]");
     return students.filter(s => s.classCode === classCode || !classCode);
 }
 
-// 9. 명예의 전당 리더보드 저장 & 조회
 export async function saveLeaderboardScore(entry) {
     const rankings = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_RANKING) || "[]");
     rankings.push(entry);
