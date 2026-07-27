@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 2D 픽셀 아트 레트로 디자인 시스템 & CSS Style (개편)
+   🎮 [존댓말 차원 탐험대] 2D 픽셀 아트 레트로 디자인 시스템 & CSS Style
    ========================================================================== */
 
 :root {
@@ -28,7 +28,6 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    user-select: none;
 }
 
 body.pixel-theme {
@@ -65,81 +64,35 @@ body.pixel-theme {
     flex-shrink: 0;
 }
 
-.gnb-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    white-space: nowrap;
-}
-
-.gnb-title {
-    font-family: var(--font-pixel);
-    font-size: 1.4rem;
-    color: var(--pixel-accent);
-    text-shadow: 2px 2px 0 #000;
-}
-
+.gnb-left { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.gnb-title { font-family: var(--font-pixel); font-size: 1.4rem; color: var(--pixel-accent); text-shadow: 2px 2px 0 #000; }
 .gnb-center { display: flex; align-items: center; }
 
 .user-pill-info {
-    background: #25204c;
-    border: 2px solid #5d54a4;
-    padding: 4px 14px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.95rem;
+    background: #25204c; border: 2px solid #5d54a4; padding: 4px 14px; border-radius: 20px;
+    display: flex; align-items: center; gap: 10px; font-size: 0.95rem;
 }
 
-/* 8번: 칭호 태그 클릭 스타일 */
 .user-title-badge {
-    background: var(--pixel-accent);
-    color: #000;
-    font-family: var(--font-pixel);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    border: 1px solid #000;
-    cursor: pointer;
+    background: var(--pixel-accent); color: #000; font-family: var(--font-pixel);
+    padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #000; cursor: pointer;
 }
-.user-title-badge.clickable:hover {
-    background: #ffe082;
-    transform: scale(1.05);
-}
-
+.user-title-badge.clickable:hover { background: #ffe082; transform: scale(1.05); }
 .gnb-right { display: flex; align-items: center; gap: 8px; }
 
 /* Controls */
 .pixel-box {
-    background: var(--bg-card);
-    border: 3px solid var(--bg-card-border);
-    box-shadow: var(--pixel-shadow);
-    border-radius: 8px;
-    padding: 20px;
+    background: var(--bg-card); border: 3px solid var(--bg-card-border);
+    box-shadow: var(--pixel-shadow); border-radius: 8px; padding: 20px;
 }
 
 .btn-pixel {
-    font-family: var(--font-pixel);
-    font-size: 1rem;
-    padding: 10px 18px;
-    border: 2px solid #000;
-    border-radius: 6px;
-    cursor: pointer;
-    box-shadow: 3px 3px 0 #000;
-    transition: transform 0.1s, box-shadow 0.1s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #fff;
+    font-family: var(--font-pixel); font-size: 1rem; padding: 10px 18px; border: 2px solid #000;
+    border-radius: 6px; cursor: pointer; box-shadow: 3px 3px 0 #000; transition: transform 0.1s, box-shadow 0.1s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #fff; pointer-events: auto;
 }
 
-.btn-pixel:active {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 #000;
-}
-
+.btn-pixel:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 .btn-primary { background: var(--pixel-primary); }
 .btn-primary:hover { background: var(--pixel-primary-hover); }
 .btn-success { background: var(--pixel-success); color: #000; }
@@ -153,12 +106,7 @@ body.pixel-theme {
 .btn-lg { padding: 14px 24px; font-size: 1.2rem; }
 .btn-block { width: 100%; display: flex; }
 
-.pixel-hr {
-    border: 0;
-    height: 2px;
-    background: var(--bg-card-border);
-    margin: 15px 0;
-}
+.pixel-hr { border: 0; height: 2px; background: var(--bg-card-border); margin: 15px 0; }
 
 .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 .input-group label { font-family: var(--font-pixel); font-size: 0.9rem; color: var(--pixel-accent); }
@@ -172,7 +120,7 @@ body.pixel-theme {
 .main-content { flex: 1; position: relative; overflow: hidden; }
 .view-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; overflow-y: auto; }
 
-/* Login Screen */
+/* Login Screen & Role Card Click */
 #view-login { display: flex; align-items: center; justify-content: center; }
 .login-hero-box { width: 600px; max-width: 90vw; text-align: center; }
 .hero-header { margin-bottom: 20px; }
@@ -182,15 +130,18 @@ body.pixel-theme {
 .hero-subtitle { color: var(--text-muted); font-size: 0.95rem; }
 
 .login-role-selector { display: flex; gap: 15px; margin-bottom: 20px; }
-.role-card { flex: 1; background: #25204c; border: 2px solid #3d356b; border-radius: 8px; padding: 16px 10px; cursor: pointer; color: #fff; transition: all 0.2s; }
+.role-card {
+    flex: 1; background: #25204c; border: 2px solid #3d356b; border-radius: 8px; padding: 16px 10px;
+    cursor: pointer !important; color: #fff; transition: all 0.2s; pointer-events: auto !important;
+}
+.role-card * { pointer-events: none; }
 .role-card.active { background: #362e6e; border-color: var(--pixel-accent); box-shadow: 0 0 10px rgba(255, 209, 102, 0.4); }
 .role-icon { font-size: 2rem; margin-bottom: 6px; }
 .role-card h2 { font-family: var(--font-pixel); font-size: 1.1rem; margin-bottom: 4px; }
 .role-card p { font-size: 0.8rem; color: var(--text-muted); }
 .login-form-box { text-align: left; }
-.pending-notice-box { background: #382c16; border: 2px dashed var(--pixel-warning); padding: 15px; border-radius: 6px; margin-top: 15px; text-align: center; }
 
-/* Lobby Screen & Sidebar */
+/* Lobby Screen & Cards */
 .lobby-layout { display: flex; gap: 20px; height: 100%; }
 .lobby-sidebar { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; }
 .profile-card { text-align: center; }
@@ -205,22 +156,11 @@ body.pixel-theme {
 .badge-collection-box { flex: 1; overflow-y: auto; margin-top: 10px; }
 .badge-collection-box h3 { font-family: var(--font-pixel); font-size: 0.9rem; color: var(--pixel-accent); margin-bottom: 8px; }
 
-/* 50개 배지 그리드 */
-.badge-grid-50 {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    max-height: 260px;
-    overflow-y: auto;
-}
-
-.badge-item-mini {
-    background: #14112b; border: 1px solid #3d356b; border-radius: 4px; padding: 4px; text-align: center; opacity: 0.3; transition: all 0.2s;
-}
+.badge-grid-50 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 260px; overflow-y: auto; }
+.badge-item-mini { background: #14112b; border: 1px solid #3d356b; border-radius: 4px; padding: 4px; text-align: center; opacity: 0.3; transition: all 0.2s; }
 .badge-item-mini.earned { opacity: 1; border-color: var(--pixel-accent); background: #2b2554; }
 .badge-item-mini .b-icon { font-size: 1.2rem; }
 
-/* Lobby Main & Cards */
 .lobby-main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .mode-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
 .mode-tab { background: #201b42; border: 2px solid #3d356b; color: var(--text-muted); font-family: var(--font-pixel); padding: 10px 16px; border-radius: 8px 8px 0 0; cursor: pointer; }
@@ -229,16 +169,8 @@ body.pixel-theme {
 .tab-panel { flex: 1; background: var(--bg-card); border: 3px solid var(--bg-card-border); border-radius: 0 8px 8px 8px; padding: 20px; overflow-y: auto; }
 .world-map-header h2 { font-family: var(--font-pixel); font-size: 1.1rem; color: var(--pixel-accent); margin-bottom: 16px; }
 
-/* 6개 월드 카드 그리드 (3열 2행) */
-.world-card-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-}
-
-.world-card {
-    background: #26204d; border: 2px solid #433980; border-radius: 8px; padding: 16px; position: relative; transition: transform 0.2s;
-}
+.world-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.world-card { background: #26204d; border: 2px solid #433980; border-radius: 8px; padding: 16px; position: relative; transition: transform 0.2s; }
 .world-card:hover { transform: translateY(-4px); border-color: var(--pixel-accent); }
 .world-card.locked { opacity: 0.5; filter: grayscale(80%); }
 
@@ -251,31 +183,22 @@ body.pixel-theme {
 .world-card h3 { font-family: var(--font-pixel); font-size: 1rem; margin-bottom: 6px; color: #fff; }
 .world-card .world-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; height: 32px; }
 .sub-locations-tags { font-size: 0.75rem; color: #06d6a0; font-family: var(--font-pixel); margin-bottom: 10px; }
-
 .crossover-card { background: #19382f; border-color: #06d6a0; }
 
-/* 11번, 12번: 바른말 수호대 탭 디자인 개편 */
-.survival-layout-container {
-    display: flex; gap: 20px; flex-direction: column;
-}
-
+.survival-layout-container { display: flex; gap: 20px; flex-direction: column; }
 .survival-intro-box h2 { font-family: var(--font-pixel); color: var(--pixel-warning); margin-bottom: 8px; }
 .rules-list { display: flex; gap: 12px; margin: 14px 0; }
 .rule-item { flex: 1; background: #14112b; border: 1px solid #3d356b; padding: 10px; border-radius: 6px; font-size: 0.85rem; }
-
 .survival-hall-box h3 { font-family: var(--font-pixel); color: var(--pixel-accent); margin-bottom: 10px; }
 
-/* 13번: AI 맞춤 오답노트 */
 .ai-notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 12px; }
 .ai-note-card { background: #25204c; border: 2px solid #433980; padding: 14px; border-radius: 8px; }
 .ai-note-card h3 { font-family: var(--font-pixel); color: var(--pixel-accent); font-size: 1rem; margin-bottom: 8px; }
 .ai-note-card p { font-size: 0.85rem; line-height: 1.4; color: #e2e0ed; }
 
-/* 퀘스트 화면 & 7번 가독성 수정 */
 .quest-container { height: 100%; display: flex; flex-direction: column; }
 .quest-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 2px solid var(--bg-card-border); }
 
-/* 세부 장소 선택 바 */
 .sub-location-selector { background: #14102e; border: 2px solid #3d356b; border-radius: 8px; padding: 10px; margin: 10px 0; }
 .sub-location-selector h3 { font-family: var(--font-pixel); font-size: 0.85rem; color: var(--pixel-accent); margin-bottom: 8px; }
 .sub-location-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -301,7 +224,6 @@ body.pixel-theme {
 .btn-option { background: #292357; border: 2px solid #4d438c; color: #fff; padding: 12px 16px; border-radius: 6px; cursor: pointer; font-size: 0.95rem; text-align: left; transition: all 0.2s; }
 .btn-option:hover { background: #3e3678; border-color: var(--pixel-accent); }
 
-/* 바른말 수호대 서바이벌 */
 .survival-container { height: 100%; display: flex; flex-direction: column; }
 .survival-header { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-pixel); font-size: 1.1rem; margin-bottom: 12px; }
 .hearts-display { color: var(--pixel-danger); }
@@ -321,7 +243,6 @@ body.pixel-theme {
 .blocks-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; min-height: 40px; }
 .block-actions { display: flex; justify-content: space-between; align-items: center; }
 
-/* Dashboard & Tables */
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .invite-code-pill { background: #25204c; border: 2px solid var(--pixel-accent); padding: 6px 12px; border-radius: 6px; font-family: var(--font-pixel); }
 .dash-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
@@ -345,7 +266,6 @@ body.pixel-theme {
 .pixel-table th, .pixel-table td { border: 1px solid #3d356b; padding: 8px; text-align: center; }
 .pixel-table th { background: #25204c; font-family: var(--font-pixel); color: var(--pixel-accent); }
 
-/* Modals */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-box { width: 460px; max-width: 90vw; text-align: center; }
 .modal-lg { width: 680px; }

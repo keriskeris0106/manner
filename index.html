@@ -17,7 +17,7 @@
     <!-- App Container -->
     <div id="app" class="app-container">
 
-        <!-- 1. 상단 바 (GNB): 크롬북 최적화 (제목 한 줄 고정, 콤팩트 종료 버튼) -->
+        <!-- 1. 상단 바 (GNB) -->
         <header id="gnb" class="gnb-bar hidden">
             <div class="gnb-left">
                 <span class="pixel-icon">🌌</span>
@@ -26,13 +26,13 @@
             <div class="gnb-center">
                 <div id="current-user-info" class="user-pill-info">
                     <span id="user-display-name">홍길동 (3학년 1반)</span>
-                    <button id="user-title-display" class="user-title-badge clickable" title="클릭 시 전체 레벨 및 획득 조건 보기">🌱 새싹 탐험대 (Lv.1)</button>
+                    <button id="user-title-display" class="user-title-badge clickable" type="button" title="클릭 시 전체 레벨 및 획득 조건 보기">🌱 새싹 탐험대 (Lv.1)</button>
                 </div>
             </div>
             <div class="gnb-right">
-                <button id="btn-creator-mode" class="btn-pixel btn-warning btn-compact" title="제작자 전용 시나리오/프롬프트 템플릿 관리">🛠️ 제작자 마스터</button>
-                <button id="btn-sound-toggle" class="btn-pixel btn-icon" title="음악 켜기/끄기">🎵</button>
-                <button id="btn-logout" class="btn-pixel btn-danger btn-compact">게임 종료 ✖</button>
+                <button id="btn-creator-mode" class="btn-pixel btn-warning btn-compact" type="button" title="제작자 전용 시나리오/프롬프트 템플릿 관리">🛠️ 제작자 마스터</button>
+                <button id="btn-sound-toggle" class="btn-pixel btn-icon" type="button" title="음악 켜기/끄기">🎵</button>
+                <button id="btn-logout" class="btn-pixel btn-danger btn-compact" type="button">게임 종료 ✖</button>
             </div>
         </header>
 
@@ -48,22 +48,22 @@
                         <p class="hero-subtitle">엉망이 된 차원의 존댓말을 구하고 바른말 수호자가 되어보세요!</p>
                     </div>
 
-                    <!-- 3번: 교사 접속 버튼 간결화 ("교사 로그인") -->
+                    <!-- 역할 선택 탭 (클릭 이벤트 100% 보장 구조) -->
                     <div class="login-role-selector">
-                        <button id="tab-student-login" class="role-card active" type="button">
+                        <div id="tab-student-login" class="role-card active">
                             <div class="role-icon">🎒</div>
                             <h2>학생 탐험대 로그인</h2>
                             <p>선생님이 주신 클래스 코드로 입장!</p>
-                        </button>
-                        <button id="tab-teacher-login" class="role-card" type="button">
+                        </div>
+                        <div id="tab-teacher-login" class="role-card">
                             <div class="role-icon">👩‍🏫</div>
                             <h2>교사 로그인</h2>
                             <p>구글 로그인 및 학급 생성</p>
-                        </button>
+                        </div>
                     </div>
 
                     <!-- 학생 로그인 폼 -->
-                    <form id="form-student-login" class="login-form-box">
+                    <form id="form-student-login" class="login-form-box" style="display: block;">
                         <div class="input-group">
                             <label for="student-class-code">🔑 학급 초대 코드</label>
                             <input type="text" id="student-class-code" placeholder="선생님이 발급한 클래스 코드 입력" maxlength="12" required autocomplete="off">
@@ -105,15 +105,15 @@
                         </button>
                     </form>
 
-                    <!-- 교사 로그인 & 가입 폼 (1번: 클릭 시 100% 명확한 화면 전환) -->
-                    <div id="box-teacher-login" class="login-form-box hidden">
-                        <div class="teacher-auth-actions">
+                    <!-- 교사 로그인 & 가입 폼 (클릭 시 100% 즉시 구글 로그인 버튼 표출) -->
+                    <div id="box-teacher-login" class="login-form-box" style="display: none;">
+                        <div class="teacher-auth-actions" style="margin-bottom: 15px;">
                             <button id="btn-google-login" type="button" class="btn-pixel btn-google btn-block btn-lg">
                                 <i class="fab fa-google"></i> Google 계정으로 교사 로그인
                             </button>
                         </div>
                         
-                        <form id="form-teacher-register" class="teacher-register-box hidden">
+                        <form id="form-teacher-register" class="teacher-register-box" style="display: none;">
                             <hr class="pixel-hr">
                             <h3>📋 학급 정보 입력 (학급 코드 자동 생성)</h3>
                             <div class="input-group-row">
@@ -164,7 +164,7 @@
                             <div class="avatar-box">🧙‍♂️</div>
                             <h2 id="lobby-user-name">홍길동</h2>
                             <p id="lobby-user-class">3학년 1반 (클래스: 탐험대)</p>
-                            <button class="title-badge-large clickable" id="lobby-user-title">🌱 새싹 탐험대 (Lv.1)</button>
+                            <button class="title-badge-large clickable" id="lobby-user-title" type="button">🌱 새싹 탐험대 (Lv.1)</button>
                         </div>
                         <hr class="pixel-hr">
                         <div class="badge-collection-box">
@@ -191,7 +191,7 @@
                                     <h3>월드 1: 시끌벅적 우리 마을</h3>
                                     <p class="world-desc">상대 높임법 (해요체, 합쇼체)</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
                                 </div>
                                 <div class="world-card locked" data-world="2" id="wcard-2">
                                     <div class="world-badge-status" id="wb-2">0/10</div>
@@ -199,7 +199,7 @@
                                     <h3>월드 2: 신비한 동화 월드</h3>
                                     <p class="world-desc">전래동화/명작 속 존댓말 교정</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
                                 </div>
                                 <div class="world-card locked" data-world="3" id="wcard-3">
                                     <div class="world-badge-status" id="wb-3">0/10</div>
@@ -207,7 +207,7 @@
                                     <h3>월드 3: 삐뽀삐뽀 미래 병원</h3>
                                     <p class="world-desc">사물 높임 오류 교정 ("주사 맞으실게요 X")</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
                                 </div>
                                 <div class="world-card locked" data-world="4" id="wcard-4">
                                     <div class="world-badge-status" id="wb-4">0/10</div>
@@ -215,7 +215,7 @@
                                     <h3>월드 4: 거꾸로 초등학교</h3>
                                     <p class="world-desc">압존법 이해 및 윗사람 높임법</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
                                 </div>
                                 <div class="world-card locked" data-world="5" id="wcard-5">
                                     <div class="world-badge-status" id="wb-5">0/10</div>
@@ -223,14 +223,14 @@
                                     <h3>월드 5: 조선시대 타임슬립</h3>
                                     <p class="world-desc">특수 어휘 (진지, 연세, 성함, 주무시다 등)</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
                                 </div>
                                 <div class="world-card crossover-card locked" id="wcard-crossover">
                                     <div class="world-badge-status">🔒 해금 대기</div>
                                     <div class="world-icon">🌌</div>
                                     <h3>차원 대통합 (엔드 콘텐츠)</h3>
                                     <p class="world-desc">모든 월드 배지 50개 모은 최고의 탐험가 전용 무한 믹스 모드!</p>
-                                    <button id="btn-start-crossover" class="btn-pixel btn-success btn-sm" disabled>🔒 50개 배지 필요</button>
+                                    <button id="btn-start-crossover" class="btn-pixel btn-success btn-sm" type="button" disabled>🔒 50개 배지 필요</button>
                                 </div>
                             </div>
                         </div>
@@ -245,7 +245,7 @@
                                         <div class="rule-item">⏱️ <strong>제한시간 5분</strong>: 5분 카운트다운 안에 최다 연속 정답에 도전하세요!</div>
                                         <div class="rule-item">📋 <strong>종료 시 오답 노출</strong>: 게임 종료 시 틀린 문제 요약 팝업이 노출됩니다.</div>
                                     </div>
-                                    <button id="btn-start-survival" class="btn-pixel btn-warning btn-lg">
+                                    <button id="btn-start-survival" class="btn-pixel btn-warning btn-lg" type="button">
                                         ⚔️ 서바이벌 도전 시작!
                                     </button>
                                 </div>
@@ -283,7 +283,7 @@
             <section id="view-quest" class="view-screen hidden">
                 <div class="quest-container pixel-box">
                     <div class="quest-header">
-                        <button id="btn-exit-quest" class="btn-pixel btn-warning btn-sm">⬅️ 월드 지도로</button>
+                        <button id="btn-exit-quest" class="btn-pixel btn-warning btn-sm" type="button">⬅️ 월드 지도로</button>
                         <div class="quest-title-info">
                             <h2 id="quest-location-name">월드 1 - [세부 장소]</h2>
                         </div>
@@ -310,7 +310,7 @@
             <section id="view-survival" class="view-screen hidden">
                 <div class="survival-container pixel-box">
                     <div class="survival-header">
-                        <button id="btn-home-survival" class="btn-pixel btn-warning btn-sm">🏠 로비로 (홈으로)</button>
+                        <button id="btn-home-survival" class="btn-pixel btn-warning btn-sm" type="button">🏠 로비로 (홈으로)</button>
                         <div class="hearts-display">하트: <span id="survival-hearts">❤️❤️❤️</span></div>
                         <div class="timer-display">⏱️ 남은 시간: <span id="survival-timer">05:00</span></div>
                         <div class="score-display">맞힌 문제: <span id="survival-score-count">0</span>개</div>
@@ -332,8 +332,8 @@
                     <div class="word-blocks-pool">
                         <div id="blocks-container" class="blocks-container"></div>
                         <div class="block-actions">
-                            <button id="btn-reset-blocks" class="btn-pixel btn-sm">🔄 블록 다시 배치</button>
-                            <button id="btn-submit-sentence" class="btn-pixel btn-success btn-lg">✨ 문장 제출!</button>
+                            <button id="btn-reset-blocks" class="btn-pixel btn-sm" type="button">🔄 블록 다시 배치</button>
+                            <button id="btn-submit-sentence" class="btn-pixel btn-success btn-lg" type="button">✨ 문장 제출!</button>
                         </div>
                     </div>
                 </div>
@@ -346,13 +346,13 @@
                         <h2>👩‍🏫 교사 관리자 대시보드 - <span id="dash-class-title">3학년 긍정열정반</span></h2>
                         <div class="dashboard-top-actions">
                             <span id="dash-invite-code" class="invite-code-pill">클래스 코드: <strong>EXP123</strong></span>
-                            <button id="btn-print-report" class="btn-pixel btn-primary">🖨️ 학급 진단 리포트 인쇄/PDF</button>
+                            <button id="btn-print-report" class="btn-pixel btn-primary" type="button">🖨️ 학급 진단 리포트 인쇄/PDF</button>
                         </div>
                     </div>
 
                     <div class="dash-tabs">
-                        <button class="dash-tab active" data-dashtab="students">👥 학생 학습 이력</button>
-                        <button class="dash-tab" data-dashtab="custom-quest">✏️ 커스텀 퀘스트 작성</button>
+                        <button class="dash-tab active" data-dashtab="students" type="button">👥 학생 학습 이력</button>
+                        <button class="dash-tab" data-dashtab="custom-quest" type="button">✏️ 커스텀 퀘스트 작성</button>
                     </div>
 
                     <div id="dashtab-students" class="dashtab-panel active">
@@ -436,7 +436,7 @@
                         <tr><td><strong>🌌 차원 대마법사 (Lv.MAX)</strong></td><td>50개 (최대)</td><td>모든 월드의 배지 50개를 수집한 최고의 대마법사</td></tr>
                     </tbody>
                 </table>
-                <button id="btn-close-level-modal" class="btn-pixel btn-primary" style="margin-top: 15px;">확인 및 닫기</button>
+                <button id="btn-close-level-modal" class="btn-pixel btn-primary" type="button" style="margin-top: 15px;">확인 및 닫기</button>
             </div>
         </div>
 
@@ -462,8 +462,8 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
-                    <button id="btn-save-creator-data" class="btn-pixel btn-success">💾 템플릿 DB 저장 및 반영</button>
-                    <button id="btn-close-creator-modal" class="btn-pixel btn-secondary">닫기</button>
+                    <button id="btn-save-creator-data" class="btn-pixel btn-success" type="button">💾 템플릿 DB 저장 및 반영</button>
+                    <button id="btn-close-creator-modal" class="btn-pixel btn-secondary" type="button">닫기</button>
                 </div>
             </div>
         </div>
@@ -479,7 +479,7 @@
                     <p class="final-score-text">최종 점수: <strong id="modal-final-score">100</strong>점</p>
                     <p id="modal-score-comment">상황에 맞는 올바른 존댓말을 훌륭하게 사용했습니다!</p>
                 </div>
-                <button id="btn-close-quest-modal" class="btn-pixel btn-primary">확인</button>
+                <button id="btn-close-quest-modal" class="btn-pixel btn-primary" type="button">확인</button>
             </div>
         </div>
 
@@ -490,7 +490,7 @@
                 <hr class="pixel-hr">
                 <h3>📋 내가 틀렸던 문제 요약 오답 노트</h3>
                 <div id="so-wrong-list" class="so-wrong-list"></div>
-                <button id="btn-close-survival-modal" class="btn-pixel btn-primary">확인 및 랭킹 등록</button>
+                <button id="btn-close-survival-modal" class="btn-pixel btn-primary" type="button">확인 및 랭킹 등록</button>
             </div>
         </div>
 
