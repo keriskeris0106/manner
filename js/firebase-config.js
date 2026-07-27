@@ -23,14 +23,16 @@ import {
     arrayUnion 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 기본 데모용 Firebase 설정 (사용자가 Vercel 환경변수나 콘솔 키로 교체 가능)
+import { getEnv } from './env.js';
+
+// Vercel / 환경 변수 주입 로직 적용
 const firebaseConfig = {
-    apiKey: "AIzaSyDemoKeyForMannerDimensionExplorer2026",
-    authDomain: "manner-explorer.firebaseapp.com",
-    projectId: "manner-explorer",
-    storageBucket: "manner-explorer.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:demo123456"
+    apiKey: getEnv("FIREBASE_API_KEY", "AIzaSyDemoKeyForMannerDimensionExplorer2026"),
+    authDomain: getEnv("FIREBASE_AUTH_DOMAIN", "manner-explorer.firebaseapp.com"),
+    projectId: getEnv("FIREBASE_PROJECT_ID", "manner-explorer"),
+    storageBucket: getEnv("FIREBASE_STORAGE_BUCKET", "manner-explorer.appspot.com"),
+    messagingSenderId: getEnv("FIREBASE_MESSAGING_SENDER_ID", "123456789012"),
+    appId: getEnv("FIREBASE_APP_ID", "1:123456789012:web:demo123456")
 };
 
 // Initialize Firebase
@@ -43,9 +45,9 @@ try {
     db = getFirestore(app);
     googleProvider = new GoogleAuthProvider();
     isFirebaseAvailable = true;
-    console.log("🔥 Firebase initialized successfully.");
+    console.log("🔥 Firebase initialized with Environment Variables.");
 } catch (e) {
-    console.warn("⚠️ Firebase fallback mode initialized:", e);
+    console.warn("⚠️ Firebase fallback mode initialized (Local Store active):", e);
 }
 
 export { auth, db, googleProvider, isFirebaseAvailable };
@@ -128,7 +130,6 @@ export async function updateTeacherStatus(uid, status) {
 
 // 6. 학생 등록 및 로그인
 export async function loginOrRegisterStudent(studentInfo) {
-    // studentInfo: { classCode, name, grade, classNum }
     const studentId = `${studentInfo.classCode}_${studentInfo.grade}_${studentInfo.classNum}_${studentInfo.name}`;
     const studentRecord = {
         studentId,
@@ -150,7 +151,6 @@ export async function loginOrRegisterStudent(studentInfo) {
     const students = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_STUDENTS) || "[]");
     const idx = students.findIndex(s => s.studentId === studentId);
     if (idx >= 0) {
-        // 기존 배지 및 이력 보존
         studentRecord.earnedBadges = students[idx].earnedBadges || [];
         studentRecord.currentTitle = students[idx].currentTitle || '🌱 새싹 탐험대';
         studentRecord.errorStats = students[idx].errorStats || studentRecord.errorStats;
@@ -181,7 +181,6 @@ export async function updateStudentProgress(studentId, newBadges, errorType, wro
         }
         localStorage.setItem(LOCAL_STORAGE_KEY_STUDENTS, JSON.stringify(students));
         
-        // 현재 세션 유저와 같으면 동기화
         const curr = getCurrentUserSession();
         if (curr && curr.studentId === studentId) {
             saveUserSession(student);
@@ -207,7 +206,6 @@ export async function getStudentsByClassCode(classCode) {
 
 // 9. 명예의 전당 리더보드 저장 & 조회
 export async function saveLeaderboardScore(entry) {
-    // entry: { name, classTitle, score, title, date }
     const rankings = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_RANKING) || "[]");
     rankings.push(entry);
     rankings.sort((a, b) => b.score - a.score);
