@@ -35,19 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const lobbyUserClass = document.getElementById('lobby-user-class');
         const lobbyUserTitle = document.getElementById('lobby-user-title');
 
-        if (user.isSuperAdmin) {
-            showView('view-super-admin');
-            initSuperAdminPage();
-        } else if (user.role === 'teacher') {
-            if (user.status === 'APPROVED') {
-                showView('view-teacher-dashboard');
-                initTeacherDashboard();
-            } else {
-                showView('view-login');
-                document.getElementById('tab-teacher-login').click();
-                document.getElementById('teacher-pending-notice').classList.remove('hidden');
-                document.getElementById('form-teacher-register').classList.add('hidden');
-            }
+        if (user.role === 'teacher') {
+            showView('view-teacher-dashboard');
+            initTeacherDashboard();
         } else {
             const earned = user.earnedBadges || [];
             const title = calculateTitle(earned.length);
