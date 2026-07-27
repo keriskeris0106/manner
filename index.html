@@ -125,7 +125,7 @@
                 </div>
             </section>
 
-            <!-- [화면 2] 게임 로비 (모든 클릭 100% 인라인 보장) -->
+            <!-- [화면 2] 게임 로비 -->
             <section id="view-lobby" class="view-screen hidden">
                 <div class="lobby-layout">
                     <aside class="lobby-sidebar pixel-box">
@@ -155,45 +155,45 @@
                                 <h2>🌌 월드를 순서대로 정복하고 50개 배지를 모두 모아보세요!</h2>
                             </div>
                             <div class="world-card-grid">
-                                <div class="world-card" data-world="1" onclick="if(window.enterWorldQuest) window.enterWorldQuest(1);">
+                                <div class="world-card" id="wcard-1" data-world="1" onclick="if(window.enterWorldQuest) window.enterWorldQuest(1);">
                                     <div class="world-badge-status" id="wb-1">0/10</div>
                                     <div class="world-icon">🛒</div>
                                     <h3>월드 1: 시끌벅적 우리 마을</h3>
                                     <p class="world-desc">상대 높임법 (해요체, 합쇼체)</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button" onclick="if(window.enterWorldQuest) window.enterWorldQuest(1);">입장하기 ➔</button>
                                 </div>
-                                <div class="world-card locked" data-world="2" id="wcard-2" onclick="if(window.enterWorldQuest) window.enterWorldQuest(2);">
+                                <div class="world-card locked" id="wcard-2" data-world="2" onclick="if(window.enterWorldQuest) window.enterWorldQuest(2);">
                                     <div class="world-badge-status" id="wb-2">0/10</div>
                                     <div class="world-icon">🏰</div>
                                     <h3>월드 2: 신비한 동화 월드</h3>
                                     <p class="world-desc">전래동화/명작 속 존댓말 교정</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button" onclick="if(window.enterWorldQuest) window.enterWorldQuest(2);">입장하기 ➔</button>
                                 </div>
-                                <div class="world-card locked" data-world="3" id="wcard-3" onclick="if(window.enterWorldQuest) window.enterWorldQuest(3);">
+                                <div class="world-card locked" id="wcard-3" data-world="3" onclick="if(window.enterWorldQuest) window.enterWorldQuest(3);">
                                     <div class="world-badge-status" id="wb-3">0/10</div>
                                     <div class="world-icon">🏥</div>
                                     <h3>월드 3: 삐뽀삐뽀 미래 병원</h3>
                                     <p class="world-desc">사물 높임 오류 교정 ("주사 맞으실게요 X")</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button" onclick="if(window.enterWorldQuest) window.enterWorldQuest(3);">입장하기 ➔</button>
                                 </div>
-                                <div class="world-card locked" data-world="4" id="wcard-4" onclick="if(window.enterWorldQuest) window.enterWorldQuest(4);">
+                                <div class="world-card locked" id="wcard-4" data-world="4" onclick="if(window.enterWorldQuest) window.enterWorldQuest(4);">
                                     <div class="world-badge-status" id="wb-4">0/10</div>
                                     <div class="world-icon">🏫</div>
                                     <h3>월드 4: 거꾸로 초등학교</h3>
                                     <p class="world-desc">압존법 이해 및 윗사람 높임법</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button" onclick="if(window.enterWorldQuest) window.enterWorldQuest(4);">입장하기 ➔</button>
                                 </div>
-                                <div class="world-card locked" data-world="5" id="wcard-5" onclick="if(window.enterWorldQuest) window.enterWorldQuest(5);">
+                                <div class="world-card locked" id="wcard-5" data-world="5" onclick="if(window.enterWorldQuest) window.enterWorldQuest(5);">
                                     <div class="world-badge-status" id="wb-5">0/10</div>
                                     <div class="world-icon">👑</div>
                                     <h3>월드 5: 조선시대 타임슬립</h3>
                                     <p class="world-desc">특수 어휘 (진지, 연세, 성함, 댁 등)</p>
                                     <div class="sub-locations-tags">세부 장소 10곳 ➔</div>
-                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button">입장하기 ➔</button>
+                                    <button class="btn-pixel btn-primary btn-sm btn-enter-world" type="button" onclick="if(window.enterWorldQuest) window.enterWorldQuest(5);">입장하기 ➔</button>
                                 </div>
                                 <div class="world-card crossover-card locked" id="wcard-crossover">
                                     <div class="world-badge-status">🔒 해금 대기</div>
@@ -281,7 +281,7 @@
             <section id="view-survival" class="view-screen hidden">
                 <div class="survival-container pixel-box">
                     <div class="survival-header">
-                        <button id="btn-home-survival" class="btn-pixel btn-warning btn-sm" type="button">🏠 로비로 (홈으로)</button>
+                        <button id="btn-home-survival" class="btn-pixel btn-warning btn-sm" type="button" onclick="if(window.exitQuestToLobby) window.exitQuestToLobby();">🏠 로비로 (홈으로)</button>
                         <div class="hearts-display">하트: <span id="survival-hearts">❤️❤️❤️</span></div>
                         <div class="timer-display">⏱️ 남은 시간: <span id="survival-timer">05:00</span></div>
                         <div class="score-display">맞힌 문제: <span id="survival-score-count">0</span>개</div>

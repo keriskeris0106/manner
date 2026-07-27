@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎮 [존댓말 차원 탐험대] 2D 픽셀 아트 레트로 디자인 시스템 & CSS Style
+   🎮 [존댓말 차원 탐험대] 1000% 무결점 레이어 & CSS 클릭 관통 시스템 (style.css)
    ========================================================================== */
 
 :root {
@@ -49,12 +49,13 @@ body.pixel-theme {
     overflow: hidden;
 }
 
-/* 100% 클릭 차단 방지: hidden 클래스는 클릭 이벤트 및 화면 점유를 완전히 제거 */
+/* 100% 레이어 암막 차단 방지: hidden 요소는 레이어 깊이를 맨 밑(-999)으로 내림 */
 .hidden {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
     opacity: 0 !important;
+    z-index: -999 !important;
 }
 
 /* GNB */
@@ -66,7 +67,7 @@ body.pixel-theme {
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    z-index: 100;
+    z-index: 500;
     flex-shrink: 0;
 }
 
@@ -81,7 +82,8 @@ body.pixel-theme {
 
 .user-title-badge {
     background: var(--pixel-accent); color: #000; font-family: var(--font-pixel);
-    padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #000; cursor: pointer !important; pointer-events: auto !important;
+    padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #000;
+    cursor: pointer !important; pointer-events: auto !important;
 }
 .user-title-badge.clickable:hover { background: #ffe082; transform: scale(1.05); }
 .gnb-right { display: flex; align-items: center; gap: 8px; }
@@ -94,8 +96,8 @@ body.pixel-theme {
 
 .btn-pixel {
     font-family: var(--font-pixel); font-size: 1rem; padding: 10px 18px; border: 2px solid #000;
-    border-radius: 6px; cursor: pointer !important; pointer-events: auto !important; box-shadow: 3px 3px 0 #000; transition: transform 0.1s, box-shadow 0.1s;
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #fff;
+    border-radius: 6px; cursor: pointer !important; pointer-events: auto !important; box-shadow: 3px 3px 0 #000;
+    transition: transform 0.1s, box-shadow 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #fff;
 }
 
 .btn-pixel:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
@@ -124,7 +126,15 @@ body.pixel-theme {
 .input-group-row .input-group { flex: 1; }
 
 .main-content { flex: 1; position: relative; overflow: hidden; }
-.view-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; overflow-y: auto; }
+
+/* 현재 활성화된 화면은 최상단 Z-Index와 클릭 이벤트를 100% 가짐 */
+.view-screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; overflow-y: auto;
+    z-index: 1 !important; pointer-events: auto !important; opacity: 1 !important; visibility: visible !important;
+}
+.view-screen.active {
+    z-index: 10 !important; display: block !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important;
+}
 
 /* Login Screen & Role Card */
 #view-login { display: flex; align-items: center; justify-content: center; }
@@ -140,7 +150,6 @@ body.pixel-theme {
     flex: 1; background: #25204c; border: 2px solid #3d356b; border-radius: 8px; padding: 16px 10px;
     cursor: pointer !important; color: #fff; transition: all 0.2s; pointer-events: auto !important;
 }
-.role-card * { pointer-events: none !important; }
 .role-card.active { background: #362e6e; border-color: var(--pixel-accent); box-shadow: 0 0 10px rgba(255, 209, 102, 0.4); }
 .role-icon { font-size: 2rem; margin-bottom: 6px; }
 .role-card h2 { font-family: var(--font-pixel); font-size: 1.1rem; margin-bottom: 4px; }
@@ -167,9 +176,8 @@ body.pixel-theme {
     background: #14112b; border: 1px solid #3d356b; border-radius: 4px; padding: 4px; text-align: center;
     opacity: 0.3; transition: all 0.2s; cursor: pointer !important; pointer-events: auto !important;
 }
-.badge-item-mini * { pointer-events: none !important; }
 .badge-item-mini.earned { opacity: 1; border-color: var(--pixel-accent); background: #2b2554; }
-.badge-item-mini .b-icon { font-size: 1.2rem; }
+.badge-item-mini .b-icon { font-size: 1.2rem; pointer-events: none !important; }
 
 .lobby-main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .mode-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -183,12 +191,12 @@ body.pixel-theme {
 .world-map-header h2 { font-family: var(--font-pixel); font-size: 1.1rem; color: var(--pixel-accent); margin-bottom: 16px; }
 
 .world-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* 월드 카드 클릭 완전 보장 */
 .world-card {
     background: #26204d; border: 2px solid #433980; border-radius: 8px; padding: 16px; position: relative;
-    transition: transform 0.2s; cursor: pointer !important; pointer-events: auto !important;
+    transition: transform 0.2s; cursor: pointer !important; pointer-events: auto !important; z-index: 5;
 }
-/* 100% 클릭 관통: 카드 내부 텍스트 및 버튼이 부모 클릭을 가로막지 않도록 보장 */
-.world-card * { pointer-events: none !important; }
 .world-card:hover { transform: translateY(-4px); border-color: var(--pixel-accent); }
 .world-card.locked { opacity: 0.5; filter: grayscale(80%); cursor: not-allowed !important; }
 
@@ -293,15 +301,17 @@ body.pixel-theme {
 .pixel-table th, .pixel-table td { border: 1px solid #3d356b; padding: 8px; text-align: center; }
 .pixel-table th { background: #25204c; font-family: var(--font-pixel); color: var(--pixel-accent); }
 
-/* 모달 오버레이 차단 방지 */
+/* 모달 오버레이 차단 방지 (hidden일 때 Z-Index -999) */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;
+    background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 2000;
 }
 .modal-overlay.hidden {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    opacity: 0 !important;
+    z-index: -999 !important;
 }
 
 .modal-box { width: 460px; max-width: 90vw; text-align: center; pointer-events: auto !important; }
